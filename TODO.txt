@@ -1,0 +1,10 @@
+resolver bug de poder sair da tela
+movimentar inimigos
+fugir ao entrar em modo de captura?
+perder vida ao entrar em contato com inimigos caçando
+capturar inimigos sendo caçados, movimentar olhinhos até a caixa central para reviverem
+ao comer fantasmas: 200, 400, 800, 1600 pontos
+inimigos:
+    olhos brancos, íris 8, 41, 225
+tela de "READY!"
+tela de fim de jogo
