@@ -9,3 +9,4 @@ void updateBaddie( Baddie *baddie, float delta, int lines, int columns, int grid
 void drawBaddie( Baddie *baddie, int lines, int columns, int gridCellSize );
 Vector2 getBaddieLineAndColumnBaddie( Baddie *baddie, int gridCellSize );
 Vector2 getLineAndColumnFromPosBaddie( Vector2 pos, int gridCellSize );
+void generateNewPath( Baddie *baddie, int lines, int columns, int gridCellSize, GameWorld *gw );

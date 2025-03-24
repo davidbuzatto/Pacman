@@ -10,9 +10,9 @@
 #include "raylib/raylib.h"
 
 typedef struct ResourceManager {
-    Texture2D textureExample;
-    Sound soundExample;
-    Music musicExample;
+    Texture2D spriteMap;
+    /*Sound soundExample;
+    Music musicExample;*/
 } ResourceManager;
 
 /**

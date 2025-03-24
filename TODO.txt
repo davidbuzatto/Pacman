@@ -8,6 +8,6 @@ inimigos:
     olhos brancos, íris 8, 41, 225
 tela de "READY!"
 tela de fim de jogo
-
+animação de morte do jogador
 Exemplo gameplay:
 https://youtu.be/dScq4P5gn4A

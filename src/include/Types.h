@@ -7,6 +7,11 @@
 #define GRID_COLUMNS 28
 #define GRID_CELL_SIZE 24
 
+typedef struct CellPos {
+    int line;
+    int column;
+} CellPos;
+
 typedef enum CellType {
     O,  // obstacle
     M,  // monster door
@@ -55,6 +60,8 @@ typedef struct Baddie {
     Vector2 vel;
     float walkingSpeed;
     int radius;
+    Texture2D spriteMap;
+    int ySource;
     Color color;
     Color vulnerableColor;
     Color returningToHuntColor;
@@ -70,6 +77,9 @@ typedef struct Baddie {
     float timeToStartBlinking;
     float blinkCounter;
     bool blink;
+    CellPos path[100];
+    int pathSize;
+    int currentPathPos;
 } Baddie;
 
 typedef struct GameWorld {

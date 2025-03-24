@@ -31,6 +31,9 @@ const float TIME_TO_RETURN_TO_HUNT = 5;
 const float TIME_TO_START_BLINKING = 3;
 const float TIME_TO_BLINK = 0.2;
 
+const bool DEBUG_GRID = false;
+const int BADDIES_TO_RUN = 4;
+
 /**
  * @brief Creates a dinamically allocated GameWorld struct instance.
  */
@@ -114,14 +117,16 @@ GameWorld* createGameWorld( void ) {
                     .x = 0,
                     .y = 0
                 },
-                .walkingSpeed = 250,
+                .walkingSpeed = 200,
                 .radius = GRID_CELL_SIZE / 2,
+                .spriteMap = rm.spriteMap,
+                .ySource = 130,
                 .color = { 255, 21, 0, 255 },
                 .vulnerableColor = { 31, 44, 255, 255 },
                 .returningToHuntColor = RAYWHITE,
                 .currentFrame = 0,
-                .maxFrames = 3,
-                .timeToNextFrame = 0.05,
+                .maxFrames = 2,
+                .timeToNextFrame = 0.1,
                 .frameTimeCounter = 0,
                 .direction = BADDIE_DIRECTION_RIGHT,
                 .hunting = true,
@@ -130,7 +135,12 @@ GameWorld* createGameWorld( void ) {
                 .timeToStartBlinking = TIME_TO_START_BLINKING,
                 .timeToBlink = TIME_TO_BLINK,
                 .blinkCounter = 0,
-                .blink = false
+                .blink = false,
+                .path = {
+                    { 11, 14 }, { 11, 18 }, { 14, 18 }, { 14, 21 }, { 5, 21 }, { 5, 1 }
+                },
+                .pathSize = 6,
+                .currentPathPos = 0
             },
             (Baddie) {
                 .pos = {
@@ -141,14 +151,16 @@ GameWorld* createGameWorld( void ) {
                     .x = 0,
                     .y = 0
                 },
-                .walkingSpeed = 250,
+                .walkingSpeed = 200,
                 .radius = GRID_CELL_SIZE / 2,
+                .spriteMap = rm.spriteMap,
+                .ySource = 194,
                 .color = { 0, 232, 255, 255 },
                 .vulnerableColor = { 31, 44, 255, 255 },
                 .returningToHuntColor = RAYWHITE,
                 .currentFrame = 0,
-                .maxFrames = 3,
-                .timeToNextFrame = 0.05,
+                .maxFrames = 2,
+                .timeToNextFrame = 0.1,
                 .frameTimeCounter = 0,
                 .direction = BADDIE_DIRECTION_RIGHT,
                 .hunting = true,
@@ -157,7 +169,12 @@ GameWorld* createGameWorld( void ) {
                 .timeToStartBlinking = TIME_TO_START_BLINKING,
                 .timeToBlink = TIME_TO_BLINK,
                 .blinkCounter = 0,
-                .blink = false
+                .blink = false,
+                .path = {
+                    { 14, 13 }, { 11, 13 }, { 11, 9 }, { 20, 9 }, { 20, 1 }, { 23, 1 }
+                },
+                .pathSize = 6,
+                .currentPathPos = 0
             },
             (Baddie) {
                 .pos = {
@@ -168,14 +185,16 @@ GameWorld* createGameWorld( void ) {
                     .x = 0,
                     .y = 0
                 },
-                .walkingSpeed = 250,
+                .walkingSpeed = 200,
                 .radius = GRID_CELL_SIZE / 2,
+                .spriteMap = rm.spriteMap,
+                .ySource = 162,
                 .color = { 255, 196, 253, 255 },
                 .vulnerableColor = { 31, 44, 255, 255 },
                 .returningToHuntColor = RAYWHITE,
                 .currentFrame = 0,
-                .maxFrames = 3,
-                .timeToNextFrame = 0.05,
+                .maxFrames = 2,
+                .timeToNextFrame = 0.1,
                 .frameTimeCounter = 0,
                 .direction = BADDIE_DIRECTION_RIGHT,
                 .hunting = true,
@@ -184,7 +203,12 @@ GameWorld* createGameWorld( void ) {
                 .timeToStartBlinking = TIME_TO_START_BLINKING,
                 .timeToBlink = TIME_TO_BLINK,
                 .blinkCounter = 0,
-                .blink = false
+                .blink = false,
+                .path = {
+                    { 14, 14 }, { 11, 14 }, { 11, 18 }, { 20, 18 }, { 20, 21 }, { 26, 21 }
+                },
+                .pathSize = 6,
+                .currentPathPos = 0
             },
             (Baddie) {
                 .pos = {
@@ -195,14 +219,16 @@ GameWorld* createGameWorld( void ) {
                     .x = 0,
                     .y = 0
                 },
-                .walkingSpeed = 250,
+                .walkingSpeed = 200,
                 .radius = GRID_CELL_SIZE / 2,
+                .spriteMap = rm.spriteMap,
+                .ySource = 226,
                 .color = { 255, 183, 80, 255 },
                 .vulnerableColor = { 31, 44, 255, 255 },
                 .returningToHuntColor = RAYWHITE,
                 .currentFrame = 0,
-                .maxFrames = 3,
-                .timeToNextFrame = 0.05,
+                .maxFrames = 2,
+                .timeToNextFrame = 0.1,
                 .frameTimeCounter = 0,
                 .direction = BADDIE_DIRECTION_RIGHT,
                 .hunting = true,
@@ -211,7 +237,12 @@ GameWorld* createGameWorld( void ) {
                 .timeToStartBlinking = TIME_TO_START_BLINKING,
                 .timeToBlink = TIME_TO_BLINK,
                 .blinkCounter = 0,
-                .blink = false
+                .blink = false,
+                .path = {
+                    { 14, 11 }, { 14, 13 }, { 11, 13 }, { 11, 9 }, { 20, 9 }, { 20, 12 }
+                },
+                .pathSize = 6,
+                .currentPathPos = 0
             },
         },
         .boundaryColor = { 35, 44, 218, 255 },
@@ -248,7 +279,11 @@ void inputAndUpdateGameWorld( GameWorld *gw, float delta ) {
     }
 
     for ( int i = 0; i < 4; i++ ) {
-        updateBaddie( &gw->baddies[i], delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+        if ( i < BADDIES_TO_RUN ) {
+            updateBaddie( &gw->baddies[i], delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+        } else {
+            break;
+        }
     }
 
     inputAndUpdatePlayer( &gw->player, delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
@@ -311,20 +346,30 @@ void drawGameWorld( GameWorld *gw ) {
         }
     }
 
-    /*for ( int i = 0; i <= GRID_LINES; i++ ) {
-        DrawLine( 0, i * GRID_CELL_SIZE, GRID_COLUMNS * GRID_CELL_SIZE, i * GRID_CELL_SIZE, WHITE );
-    }
-    for ( int i = 0; i <= GRID_COLUMNS; i++ ) {
-        DrawLine( i * GRID_CELL_SIZE, 0, i * GRID_CELL_SIZE, GRID_LINES * GRID_CELL_SIZE, WHITE );
-    }*/
-
     for ( int i = 0; i < 4; i++ ) {
-        drawBaddie( &gw->baddies[i], GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
+        if ( i < BADDIES_TO_RUN ) {
+            drawBaddie( &gw->baddies[i], GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
+        } else {
+            break;
+        }
     }
 
     drawPlayer( &gw->player, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
 
-    //DrawFPS( 20, 20 );
+    if ( DEBUG_GRID ) {
+        for ( int i = 0; i <= GRID_LINES; i++ ) {
+            DrawLine( 0, i * GRID_CELL_SIZE, GRID_COLUMNS * GRID_CELL_SIZE, i * GRID_CELL_SIZE, WHITE );
+        }
+        for ( int i = 0; i <= GRID_COLUMNS; i++ ) {
+            DrawLine( i * GRID_CELL_SIZE, 0, i * GRID_CELL_SIZE, GRID_LINES * GRID_CELL_SIZE, WHITE );
+        }
+
+        for ( int i = 0; i < GRID_LINES; i++ ) {
+            for ( int j = 0; j < GRID_COLUMNS; j++ ) {
+                DrawText( TextFormat( "%d,%d", i, j ), j * GRID_CELL_SIZE, i * GRID_CELL_SIZE, 10, WHITE );
+            }
+        }
+    }
 
     EndDrawing();
 
@@ -333,10 +378,14 @@ void drawGameWorld( GameWorld *gw ) {
 void startHuntingBaddies( GameWorld *gw ) {
 
     for ( int i = 0; i < 4; i++ ) {
-        gw->baddies[i].hunting = false;
-        gw->baddies[i].returnToHuntCounter = 0;
-        gw->baddies[i].blinkCounter = 0;
-        gw->baddies[i].blink = false;
+        if ( i < BADDIES_TO_RUN ) {
+            gw->baddies[i].hunting = false;
+            gw->baddies[i].returnToHuntCounter = 0;
+            gw->baddies[i].blinkCounter = 0;
+            gw->baddies[i].blink = false;
+        } else {
+            break;
+        }
     }
 
 }
