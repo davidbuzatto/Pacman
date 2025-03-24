@@ -34,3 +34,6 @@ void inputAndUpdateGameWorld( GameWorld *gw, float delta );
 void drawGameWorld( GameWorld *gw );
 
 void startHuntingBaddies( GameWorld *gw );
+void resolvePlayerBaddieCollision( GameWorld *gw, int lines, int columns, int gridCellSize );
+void reset( GameWorld *gw, bool gameOver );
+void copyTemplateGrid( GameWorld *gw, const CellType *template );

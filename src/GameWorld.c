@@ -32,7 +32,42 @@ const float TIME_TO_START_BLINKING = 3;
 const float TIME_TO_BLINK = 0.2;
 
 const bool DEBUG_GRID = false;
+const bool IMMORTAL = false;
 const int BADDIES_TO_RUN = 4;
+
+const CellType templateGrid[] = {
+    A, H, H, H, H, H, H, H, H, H, H, H, H, B,   A, H, H, H, H, H, H, H, H, H, H, H, H, B,
+    V, W, W, W, W, W, W, W, W, W, W, W, W, V,   V, W, W, W, W, W, W, W, W, W, W, W, W, V,
+    V, W, A, H, H, B, W, A, H, H, H, B, W, V,   V, W, A, H, H, H, B, W, A, H, H, B, W, V,
+    V, Q, V, O, O, V, W, V, O, O, O, V, W, V,   V, W, V, O, O, O, V, W, V, O, O, V, Q, V,
+    V, W, C, H, H, D, W, C, H, H, H, D, W, C,   D, W, C, H, H, H, D, W, C, H, H, D, W, V,
+    V, W, W, W, W, W, W, W, W, W, W, W, W, W,   W, W, W, W, W, W, W, W, W, W, W, W, W, V,
+    V, W, A, H, H, B, W, A, B, W, A, H, H, H,   H, H, H, B, W, A, B, W, A, H, H, B, W, V,
+    V, W, C, H, H, D, W, V, V, W, C, H, H, B,   A, H, H, D, W, V, V, W, C, H, H, D, W, V,
+    V, W, W, W, W, W, W, V, V, W, W, W, W, V,   V, W, W, W, W, V, V, W, W, W, W, W, W, V,
+    C, H, H, H, H, B, W, V, C, H, H, B, P, V,   V, P, A, H, H, D, V, W, A, H, H, H, H, D,
+    O, O, O, O, O, V, W, V, A, H, H, D, P, C,   D, P, C, H, H, B, V, W, V, O, O, O, O, O,
+    O, O, O, O, O, V, W, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, W, V, O, O, O, O, O,
+    O, O, O, O, O, V, W, V, V, P, A, H, H, M,   M, H, H, B, P, V, V, W, V, O, O, O, O, O,
+    H, H, H, H, H, D, W, C, D, P, V, P, P, P,   P, P, P, V, P, C, D, W, C, H, H, H, H, H,
+    P, P, P, P, P, P, W, P, P, P, V, P, P, P,   P, P, P, V, P, P, P, W, P, P, P, P, P, P,
+    H, H, H, H, H, B, W, A, B, P, V, P, P, P,   P, P, P, V, P, A, B, W, A, H, H, H, H, H,
+    O, O, O, O, O, V, W, V, V, P, C, H, H, H,   H, H, H, D, P, V, V, W, V, O, O, O, O, O,
+    O, O, O, O, O, V, W, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, W, V, O, O, O, O, O,
+    O, O, O, O, O, V, W, V, V, P, A, H, H, H,   H, H, H, B, P, V, V, W, V, O, O, O, O, O,
+    A, H, H, H, H, D, W, C, D, P, C, H, H, B,   A, H, H, D, P, C, D, W, C, H, H, H, H, B,
+    V, W, W, W, W, W, W, W, W, W, W, W, W, V,   V, W, W, W, W, W, W, W, W, W, W, W, W, V,
+    V, W, A, H, H, B, W, A, H, H, H, B, W, V,   V, W, A, H, H, H, B, W, A, H, H, B, W, V,
+    V, W, C, H, B, V, W, C, H, H, H, D, W, C,   D, W, C, H, H, H, D, W, V, A, H, D, W, V,
+    V, Q, W, W, V, V, W, W, W, W, W, W, W, P,   P, W, W, W, W, W, W, W, V, V, W, W, Q, V,
+    C, H, B, W, V, V, W, A, B, W, A, H, H, H,   H, H, H, B, W, A, B, W, V, V, W, A, H, D,
+    A, H, D, W, C, D, W, V, V, W, C, H, H, B,   A, H, H, D, W, V, V, W, C, D, W, C, H, B,
+    V, W, W, W, W, W, W, V, V, W, W, W, W, V,   V, W, W, W, W, V, V, W, W, W, W, W, W, V,
+    V, W, A, H, H, H, H, D, C, H, H, B, W, V,   V, W, A, H, H, D, C, H, H, H, H, B, W, V,
+    V, W, C, H, H, H, H, H, H, H, H, D, W, C,   D, W, C, H, H, H, H, H, H, H, H, D, W, V,
+    V, W, W, W, W, W, W, W, W, W, W, W, W, W,   W, W, W, W, W, W, W, W, W, W, W, W, W, V,
+    C, H, H, H, H, H, H, H, H, H, H, H, H, H,   H, H, H, H, H, H, H, H, H, H, H, H, H, D
+};
 
 /**
  * @brief Creates a dinamically allocated GameWorld struct instance.
@@ -42,51 +77,7 @@ GameWorld* createGameWorld( void ) {
     GameWorld *gw = (GameWorld*) malloc( sizeof( GameWorld ) );
     
     *gw = (GameWorld) {
-        /*.grid = {
-            0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            0, 1, 0, 1, 0, 0, 1, 0, 1, 0,
-            0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 0, 1, 0, 0, 1, 0, 1, 0,
-            0, 1, 0, 1, 0, 0, 1, 0, 1, 0,
-            0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 0, 1, 0, 0, 1, 0, 1, 0,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            0, 1, 0, 0, 0, 0, 0, 0, 1, 0
-        },*/
-        .grid = {
-            A, H, H, H, H, H, H, H, H, H, H, H, H, B,   A, H, H, H, H, H, H, H, H, H, H, H, H, B,
-            V, W, W, W, W, W, W, W, W, W, W, W, W, V,   V, W, W, W, W, W, W, W, W, W, W, W, W, V,
-            V, W, A, H, H, B, W, A, H, H, H, B, W, V,   V, W, A, H, H, H, B, W, A, H, H, B, W, V,
-            V, Q, V, O, O, V, W, V, O, O, O, V, W, V,   V, W, V, O, O, O, V, W, V, O, O, V, Q, V,
-            V, W, C, H, H, D, W, C, H, H, H, D, W, C,   D, W, C, H, H, H, D, W, C, H, H, D, W, V,
-            V, W, W, W, W, W, W, W, W, W, W, W, W, W,   W, W, W, W, W, W, W, W, W, W, W, W, W, V,
-            V, W, A, H, H, B, W, A, B, W, A, H, H, H,   H, H, H, B, W, A, B, W, A, H, H, B, W, V,
-            V, W, C, H, H, D, W, V, V, W, C, H, H, B,   A, H, H, D, W, V, V, W, C, H, H, D, W, V,
-            V, W, W, W, W, W, W, V, V, W, W, W, W, V,   V, W, W, W, W, V, V, W, W, W, W, W, W, V,
-            C, H, H, H, H, B, W, V, C, H, H, B, P, V,   V, P, A, H, H, D, V, W, A, H, H, H, H, D,
-            O, O, O, O, O, V, W, V, A, H, H, D, P, C,   D, P, C, H, H, B, V, W, V, O, O, O, O, O,
-            O, O, O, O, O, V, W, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, W, V, O, O, O, O, O,
-            O, O, O, O, O, V, W, V, V, P, A, H, H, M,   M, H, H, B, P, V, V, W, V, O, O, O, O, O,
-            H, H, H, H, H, D, W, C, D, P, V, P, P, P,   P, P, P, V, P, C, D, W, C, H, H, H, H, H,
-            P, P, P, P, P, P, W, P, P, P, V, P, P, P,   P, P, P, V, P, P, P, W, P, P, P, P, P, P,
-            H, H, H, H, H, B, W, A, B, P, V, P, P, P,   P, P, P, V, P, A, B, W, A, H, H, H, H, H,
-            O, O, O, O, O, V, W, V, V, P, C, H, H, H,   H, H, H, D, P, V, V, W, V, O, O, O, O, O,
-            O, O, O, O, O, V, W, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, W, V, O, O, O, O, O,
-            O, O, O, O, O, V, W, V, V, P, A, H, H, H,   H, H, H, B, P, V, V, W, V, O, O, O, O, O,
-            A, H, H, H, H, D, W, C, D, P, C, H, H, B,   A, H, H, D, P, C, D, W, C, H, H, H, H, B,
-            V, W, W, W, W, W, W, W, W, W, W, W, W, V,   V, W, W, W, W, W, W, W, W, W, W, W, W, V,
-            V, W, A, H, H, B, W, A, H, H, H, B, W, V,   V, W, A, H, H, H, B, W, A, H, H, B, W, V,
-            V, W, C, H, B, V, W, C, H, H, H, D, W, C,   D, W, C, H, H, H, D, W, V, A, H, D, W, V,
-            V, Q, W, W, V, V, W, W, W, W, W, W, W, P,   P, W, W, W, W, W, W, W, V, V, W, W, Q, V,
-            C, H, B, W, V, V, W, A, B, W, A, H, H, H,   H, H, H, B, W, A, B, W, V, V, W, A, H, D,
-            A, H, D, W, C, D, W, V, V, W, C, H, H, B,   A, H, H, D, W, V, V, W, C, D, W, C, H, B,
-            V, W, W, W, W, W, W, V, V, W, W, W, W, V,   V, W, W, W, W, V, V, W, W, W, W, W, W, V,
-            V, W, A, H, H, H, H, D, C, H, H, B, W, V,   V, W, A, H, H, D, C, H, H, H, H, B, W, V,
-            V, W, C, H, H, H, H, H, H, H, H, D, W, C,   D, W, C, H, H, H, H, H, H, H, H, D, W, V,
-            V, W, W, W, W, W, W, W, W, W, W, W, W, W,   W, W, W, W, W, W, W, W, W, W, W, W, W, V,
-            C, H, H, H, H, H, H, H, H, H, H, H, H, H,   H, H, H, H, H, H, H, H, H, H, H, H, H, D
-        },
+        .grid = {0},
         .player = {
             .pos = {
                 .x = PLAYER_COLUMN * GRID_CELL_SIZE,
@@ -105,7 +96,12 @@ GameWorld* createGameWorld( void ) {
             .maxFrames = 3,
             .timeToNextFrame = 0.05,
             .frameTimeCounter = 0,
-            .direction = PLAYER_DIRECTION_RIGHT
+            .direction = DIRECTION_RIGHT,
+            .state = ALIVE,
+            .dyingCurrentFrame = 0,
+            .dyingMaxFrames = 11,
+            .dyingTimeToNextFrame = 0.05,
+            .dyingFrameTimeCounter = 0
         },
         .baddies = {
             (Baddie) {
@@ -128,7 +124,7 @@ GameWorld* createGameWorld( void ) {
                 .maxFrames = 2,
                 .timeToNextFrame = 0.1,
                 .frameTimeCounter = 0,
-                .direction = BADDIE_DIRECTION_RIGHT,
+                .direction = DIRECTION_RIGHT,
                 .hunting = true,
                 .timeToReturnToHunt = TIME_TO_RETURN_TO_HUNT,
                 .returnToHuntCounter = 0,
@@ -140,7 +136,8 @@ GameWorld* createGameWorld( void ) {
                     { 11, 14 }, { 11, 18 }, { 14, 18 }, { 14, 21 }, { 5, 21 }, { 5, 1 }
                 },
                 .pathSize = 6,
-                .currentPathPos = 0
+                .currentPathPos = 0,
+                .state = ALIVE
             },
             (Baddie) {
                 .pos = {
@@ -162,7 +159,7 @@ GameWorld* createGameWorld( void ) {
                 .maxFrames = 2,
                 .timeToNextFrame = 0.1,
                 .frameTimeCounter = 0,
-                .direction = BADDIE_DIRECTION_RIGHT,
+                .direction = DIRECTION_RIGHT,
                 .hunting = true,
                 .timeToReturnToHunt = TIME_TO_RETURN_TO_HUNT,
                 .returnToHuntCounter = 0,
@@ -174,7 +171,8 @@ GameWorld* createGameWorld( void ) {
                     { 14, 13 }, { 11, 13 }, { 11, 9 }, { 20, 9 }, { 20, 1 }, { 23, 1 }
                 },
                 .pathSize = 6,
-                .currentPathPos = 0
+                .currentPathPos = 0,
+                .state = ALIVE
             },
             (Baddie) {
                 .pos = {
@@ -196,7 +194,7 @@ GameWorld* createGameWorld( void ) {
                 .maxFrames = 2,
                 .timeToNextFrame = 0.1,
                 .frameTimeCounter = 0,
-                .direction = BADDIE_DIRECTION_RIGHT,
+                .direction = DIRECTION_RIGHT,
                 .hunting = true,
                 .timeToReturnToHunt = TIME_TO_RETURN_TO_HUNT,
                 .returnToHuntCounter = 0,
@@ -208,7 +206,8 @@ GameWorld* createGameWorld( void ) {
                     { 14, 14 }, { 11, 14 }, { 11, 18 }, { 20, 18 }, { 20, 21 }, { 26, 21 }
                 },
                 .pathSize = 6,
-                .currentPathPos = 0
+                .currentPathPos = 0,
+                .state = ALIVE
             },
             (Baddie) {
                 .pos = {
@@ -230,7 +229,7 @@ GameWorld* createGameWorld( void ) {
                 .maxFrames = 2,
                 .timeToNextFrame = 0.1,
                 .frameTimeCounter = 0,
-                .direction = BADDIE_DIRECTION_RIGHT,
+                .direction = DIRECTION_RIGHT,
                 .hunting = true,
                 .timeToReturnToHunt = TIME_TO_RETURN_TO_HUNT,
                 .returnToHuntCounter = 0,
@@ -242,7 +241,8 @@ GameWorld* createGameWorld( void ) {
                     { 14, 11 }, { 14, 13 }, { 11, 13 }, { 11, 9 }, { 20, 9 }, { 20, 12 }
                 },
                 .pathSize = 6,
-                .currentPathPos = 0
+                .currentPathPos = 0,
+                .state = ALIVE
             },
         },
         .boundaryColor = { 35, 44, 218, 255 },
@@ -250,11 +250,21 @@ GameWorld* createGameWorld( void ) {
         .coinColor = { 255, 192, 182, 255 },
         .timeToBlinkBigCoin = 0.2,
         .blinkBigCoinCounter = 0,
-        .showBigCoin = true
+        .showBigCoin = true,
+        .state = START
     };
 
+    copyTemplateGrid( gw, templateGrid );
     gw->smallCoinRadius = gw->player.radius * 0.3f;
     gw->bigCoinRadius = gw->player.radius * 0.8f;
+
+    for ( int i = 0; i < 4; i++ ) {
+        if ( i < BADDIES_TO_RUN ) {
+            generateNewPath( &gw->baddies[i], GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+        } else {
+            break;
+        }
+    }
 
     return gw;
 
@@ -272,21 +282,39 @@ void destroyGameWorld( GameWorld *gw ) {
  */
 void inputAndUpdateGameWorld( GameWorld *gw, float delta ) {
 
-    gw->blinkBigCoinCounter += delta;
-    if ( gw->blinkBigCoinCounter > gw->timeToBlinkBigCoin ) {
-        gw->blinkBigCoinCounter = 0;
-        gw->showBigCoin = !gw->showBigCoin;
+    if ( gw->state == RUNNING ) {
+
+        gw->blinkBigCoinCounter += delta;
+        if ( gw->blinkBigCoinCounter > gw->timeToBlinkBigCoin ) {
+            gw->blinkBigCoinCounter = 0;
+            gw->showBigCoin = !gw->showBigCoin;
+        }
+
+        for ( int i = 0; i < 4; i++ ) {
+            if ( i < BADDIES_TO_RUN ) {
+                updateBaddie( &gw->baddies[i], delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+            } else {
+                break;
+            }
+        }
+
+        inputAndUpdatePlayer( &gw->player, delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+        resolvePlayerBaddieCollision( gw, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
+
+    } else if ( gw->state == PLAYER_DYING ) {
+        inputAndUpdatePlayer( &gw->player, delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
     }
 
-    for ( int i = 0; i < 4; i++ ) {
-        if ( i < BADDIES_TO_RUN ) {
-            updateBaddie( &gw->baddies[i], delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
-        } else {
-            break;
+    if ( IsKeyPressed( KEY_ENTER ) ) {
+        if ( gw->state == START || gw->state == PAUSED || gw->player.state == DEAD ) {
+            if ( gw->player.state == DEAD ) {
+                reset( gw, gw->player.lives == 0 );
+            }
+            gw->state = RUNNING;
+        } else if ( gw->state == RUNNING ) {
+            gw->state = PAUSED;
         }
     }
-
-    inputAndUpdatePlayer( &gw->player, delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
 
 }
 
@@ -356,6 +384,19 @@ void drawGameWorld( GameWorld *gw ) {
 
     drawPlayer( &gw->player, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
 
+    if ( gw->state == START || gw->player.state == DEAD ) {
+        if ( gw->player.lives == 0 ) {
+            const char* text = "GAME OVER!";
+            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, RED );
+        } else {
+            const char* text = "READY!";
+            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
+        }
+    } else if ( gw->state == PAUSED ) {
+        const char* text = "PAUSED!";
+        DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
+    }
+
     if ( DEBUG_GRID ) {
         for ( int i = 0; i <= GRID_LINES; i++ ) {
             DrawLine( 0, i * GRID_CELL_SIZE, GRID_COLUMNS * GRID_CELL_SIZE, i * GRID_CELL_SIZE, WHITE );
@@ -388,4 +429,100 @@ void startHuntingBaddies( GameWorld *gw ) {
         }
     }
 
+}
+
+void resolvePlayerBaddieCollision( GameWorld *gw, int lines, int columns, int gridCellSize ) {
+
+    Player *player = &gw->player;
+    
+    for ( int i = 0; i < 4; i++ ) {
+        if ( i < BADDIES_TO_RUN ) {
+
+            Baddie *b = &gw->baddies[i];
+
+            if ( CheckCollisionCircles( player->pos, player->radius, b->pos, b->radius ) ) {
+
+                if ( b->hunting ) {
+                    if ( !IMMORTAL ) {
+                        gw->state = PLAYER_DYING;
+                        player->lives--;
+                        player->dyingCurrentFrame = 0;
+                        player->dyingFrameTimeCounter = 0;
+                        player->state = DYING;
+                    }
+                } else {
+                    TraceLog( LOG_INFO, "captura" );
+                    // conta pontos (dobra até finalizar o ciclo de captura)
+                    // cria caminho para a casinha, mudando a imagem para os olhinhos
+                    // ao chegar na casa, volta ao normal
+                }
+
+            }
+
+        } else {
+            break;
+        }
+    }
+
+}
+
+void reset( GameWorld *gw, bool gameOver ) {
+
+    Player *player = &gw->player;
+    player->pos = (Vector2) {
+        .x = PLAYER_COLUMN * GRID_CELL_SIZE,
+        .y = PLAYER_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
+    };
+    player->vel.x = 0;
+    player->vel.y = 0;
+    player->direction = DIRECTION_RIGHT;
+    player->state = ALIVE;
+
+    for ( int i = 0; i < 4; i++ ) {
+        if ( i < BADDIES_TO_RUN ) {
+            Baddie *b = &gw->baddies[i];
+            b->hunting = true;
+            b->state = ALIVE;
+            b->direction = DIRECTION_RIGHT;
+            Vector2 pos = { 0 };
+            switch ( i ) {
+                case 0:
+                    pos.x = BADDIE_COLUMN * GRID_CELL_SIZE;
+                    pos.y = ( BADDIE_LINE - 3 ) * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+                    break;
+                case 1:
+                    pos.x = ( BADDIE_COLUMN - 2 ) * GRID_CELL_SIZE;
+                    pos.y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+                    break;
+                case 2:
+                    pos.x = BADDIE_COLUMN * GRID_CELL_SIZE;
+                    pos.y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+                    break;
+                case 3:
+                    pos.x = ( BADDIE_COLUMN + 2 ) * GRID_CELL_SIZE;
+                    pos.y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+                    break;
+            }
+            b->pos = pos;
+            generateNewPath( b, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+        } else {
+            break;
+        }
+    }
+
+    if ( gameOver ) {
+        player->lives = 5;
+        player->points = 0;
+        copyTemplateGrid( gw, templateGrid );
+        gw->showBigCoin = true;
+    }
+    
+}
+
+void copyTemplateGrid( GameWorld *gw, const CellType *template ) {
+    for ( int i = 0; i < GRID_LINES; i++ ) {
+        for ( int j = 0; j < GRID_COLUMNS; j++ ) {
+            gw->grid[i*GRID_COLUMNS+j] = template[i*GRID_COLUMNS+j];
+        }
+    }
 }

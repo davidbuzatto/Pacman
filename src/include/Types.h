@@ -7,14 +7,8 @@
 #define GRID_COLUMNS 28
 #define GRID_CELL_SIZE 24
 
-typedef struct CellPos {
-    int line;
-    int column;
-} CellPos;
-
 typedef enum CellType {
     O,  // obstacle
-    M,  // monster door
     H,  // horizontal boundary
     V,  // vertical boundary
     A,  // top-left boundary
@@ -22,16 +16,32 @@ typedef enum CellType {
     C,  // bottom-left boundary
     D,  // bottom-right boundary
     P,  // path
+    M,  // monster door
     W,  // small coin
     Q,  // big coin
 } CellType;
 
-typedef enum PlayerDirection {
-    PLAYER_DIRECTION_LEFT,
-    PLAYER_DIRECTION_RIGHT,
-    PLAYER_DIRECTION_UP,
-    PLAYER_DIRECTION_DOWN
-} PlayerDirection;
+typedef enum State {
+    START,
+    RUNNING,
+    PAUSED,
+    PLAYER_DYING,
+    ALIVE,
+    DYING,
+    DEAD
+} State;
+
+typedef enum Direction {
+    DIRECTION_LEFT,
+    DIRECTION_RIGHT,
+    DIRECTION_UP,
+    DIRECTION_DOWN
+} Direction;
+
+typedef struct CellPos {
+    int line;
+    int column;
+} CellPos;
 
 typedef struct Player {
     Vector2 pos;
@@ -45,15 +55,13 @@ typedef struct Player {
     int maxFrames;
     float timeToNextFrame;
     float frameTimeCounter;
-    PlayerDirection direction;
+    Direction direction;
+    State state;
+    int dyingCurrentFrame;
+    int dyingMaxFrames;
+    float dyingTimeToNextFrame;
+    float dyingFrameTimeCounter;
 } Player;
-
-typedef enum BaddieDirection {
-    BADDIE_DIRECTION_LEFT,
-    BADDIE_DIRECTION_RIGHT,
-    BADDIE_DIRECTION_UP,
-    BADDIE_DIRECTION_DOWN
-} BaddieDirection;
 
 typedef struct Baddie {
     Vector2 pos;
@@ -69,7 +77,7 @@ typedef struct Baddie {
     int maxFrames;
     float timeToNextFrame;
     float frameTimeCounter;
-    BaddieDirection direction;
+    Direction direction;
     bool hunting;
     float timeToReturnToHunt;
     float returnToHuntCounter;
@@ -80,6 +88,7 @@ typedef struct Baddie {
     CellPos path[100];
     int pathSize;
     int currentPathPos;
+    State state;
 } Baddie;
 
 typedef struct GameWorld {
@@ -94,4 +103,5 @@ typedef struct GameWorld {
     float timeToBlinkBigCoin;
     float blinkBigCoinCounter;
     bool showBigCoin;
+    State state;
 } GameWorld;
