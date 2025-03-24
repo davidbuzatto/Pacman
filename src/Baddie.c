@@ -161,7 +161,7 @@ void drawBaddie( Baddie *baddie, int lines, int columns, int gridCellSize ) {
 
 }
 
-Vector2 getBaddieLineAndColumnBaddie( Baddie *baddie, int gridCellSize ) {
+Vector2 getBaddieLineAndColumn( Baddie *baddie, int gridCellSize ) {
     return (Vector2) {
         baddie->pos.x / gridCellSize,
         baddie->pos.y / gridCellSize,
@@ -192,7 +192,7 @@ void generateNewPath( Baddie *baddie, int lines, int columns, int gridCellSize, 
     }
 
     // BFS
-    Vector2 p = getBaddieLineAndColumnBaddie( baddie, gridCellSize );
+    Vector2 p = getBaddieLineAndColumn( baddie, gridCellSize );
     bool marked[GRID_LINES][GRID_COLUMNS] = { 0 };
     CellPos edgeTo[GRID_LINES][GRID_COLUMNS] = { 0 };
     CellPos queue[GRID_LINES*GRID_COLUMNS];

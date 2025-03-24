@@ -398,6 +398,7 @@ void drawGameWorld( GameWorld *gw ) {
     }
 
     if ( DEBUG_GRID ) {
+
         for ( int i = 0; i <= GRID_LINES; i++ ) {
             DrawLine( 0, i * GRID_CELL_SIZE, GRID_COLUMNS * GRID_CELL_SIZE, i * GRID_CELL_SIZE, WHITE );
         }
@@ -410,6 +411,7 @@ void drawGameWorld( GameWorld *gw ) {
                 DrawText( TextFormat( "%d,%d", i, j ), j * GRID_CELL_SIZE, i * GRID_CELL_SIZE, 10, WHITE );
             }
         }
+        
     }
 
     EndDrawing();
