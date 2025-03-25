@@ -15,6 +15,7 @@ typedef enum CellType {
     B,  // top-right boundary
     C,  // bottom-left boundary
     D,  // bottom-right boundary
+    G,  // ghost house
     P,  // path
     M,  // monster door
     W,  // small coin
@@ -28,7 +29,8 @@ typedef enum State {
     PLAYER_DYING,
     ALIVE,
     DYING,
-    DEAD
+    DEAD,
+    RETURNING_HOME
 } State;
 
 typedef enum Direction {
@@ -64,6 +66,7 @@ typedef struct Player {
 } Player;
 
 typedef struct Baddie {
+    Vector2 startPos;
     Vector2 pos;
     Vector2 vel;
     float walkingSpeed;
@@ -89,6 +92,11 @@ typedef struct Baddie {
     int pathSize;
     int currentPathPos;
     State state;
+    bool showCapturePoints;
+    Vector2 capturePointsPos;
+    int capturePoints;
+    float timeToShowPoints;
+    float showPointsCounter;
 } Baddie;
 
 typedef struct GameWorld {
@@ -104,4 +112,6 @@ typedef struct GameWorld {
     float blinkBigCoinCounter;
     bool showBigCoin;
     State state;
+    int baddieCaptureBasePoints;
+    int baddieCaptureCurrentPoints;
 } GameWorld;

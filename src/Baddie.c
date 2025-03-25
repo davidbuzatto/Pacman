@@ -33,7 +33,12 @@ void updateBaddie( Baddie *baddie, float delta, int lines, int columns, int grid
         baddie->currentPathPos = -1;
         baddie->vel.x = 0;
         baddie->vel.y = 0;
-        generateNewPath( baddie, lines, columns, gridCellSize, gw );
+        generateNewRandomPath( baddie, lines, columns, gridCellSize, gw );
+        if ( baddie->state == RETURNING_HOME ) {
+            baddie->hunting = true;
+            baddie->state = ALIVE;
+            baddie->blink = false;
+        }
     }
 
     int destX = -1;
@@ -96,6 +101,15 @@ void updateBaddie( Baddie *baddie, float delta, int lines, int columns, int grid
                 }
                 break;
         }
+
+    }
+
+    if ( baddie->showCapturePoints ) {
+        baddie->showPointsCounter += delta;
+        if ( baddie->showPointsCounter > baddie->timeToShowPoints ) {
+            baddie->showPointsCounter = 0;
+            baddie->showCapturePoints = false;
+        }
     }
 
 }
@@ -131,24 +145,37 @@ void drawBaddie( Baddie *baddie, int lines, int columns, int gridCellSize ) {
     int xStart = 0;
     int yStart = baddie->ySource;
 
-    if ( baddie->hunting ) {
-        switch ( baddie->direction ) {
-            case DIRECTION_LEFT: xStart = xStarts[1]; break;
-            case DIRECTION_RIGHT: xStart = xStarts[0]; break;
-            case DIRECTION_UP: xStart = xStarts[2]; break;
-            case DIRECTION_DOWN: xStart = xStarts[3]; break;
-        }
-    } else {
-        if ( baddie->blink ) {
-            xStart = 322;
-            yStart = 130;
+    if ( baddie->state == ALIVE ) {
+
+        if ( baddie->hunting ) {
+            switch ( baddie->direction ) {
+                case DIRECTION_LEFT: xStart = xStarts[1]; break;
+                case DIRECTION_RIGHT: xStart = xStarts[0]; break;
+                case DIRECTION_UP: xStart = xStarts[2]; break;
+                case DIRECTION_DOWN: xStart = xStarts[3]; break;
+            }
         } else {
-            xStart = 258;
-            yStart = 130;
+            if ( baddie->blink ) {
+                xStart = 322;
+                yStart = 130;
+            } else {
+                xStart = 258;
+                yStart = 130;
+            }
+        }
+
+        xStart += baddie->currentFrame * 32;
+        
+    } else if ( baddie->state == RETURNING_HOME ) {
+        xStart = 258;
+        yStart = 162;
+        switch ( baddie->direction ) {
+            case DIRECTION_LEFT: xStart += 32; break;
+            case DIRECTION_RIGHT: xStart += 0; break;
+            case DIRECTION_UP: xStart += 64; break;
+            case DIRECTION_DOWN: xStart += 96; break;
         }
     }
-
-    xStart += baddie->currentFrame * 32;
 
     DrawTexturePro( 
         baddie->spriteMap, 
@@ -159,6 +186,17 @@ void drawBaddie( Baddie *baddie, int lines, int columns, int gridCellSize ) {
         WHITE
     );
 
+    if ( baddie->showCapturePoints ) {
+        const char *text = TextFormat( "%d", baddie->capturePoints );
+        DrawText( 
+            text, 
+            baddie->capturePointsPos.x - MeasureText( text, 20 ) / 2,
+            baddie->capturePointsPos.y - 20,
+            20,
+            RAYWHITE
+        );
+    }
+
 }
 
 Vector2 getBaddieLineAndColumn( Baddie *baddie, int gridCellSize ) {
@@ -168,28 +206,29 @@ Vector2 getBaddieLineAndColumn( Baddie *baddie, int gridCellSize ) {
     };
 }
 
-Vector2 getLineAndColumnFromPosBaddie( Vector2 pos, int gridCellSize ) {
-    return (Vector2) {
-        pos.x / gridCellSize,
-        pos.y / gridCellSize,
-    };
-}
-
-void generateNewPath( Baddie *baddie, int lines, int columns, int gridCellSize, GameWorld *gw ) {
+void generateNewRandomPath( Baddie *baddie, int lines, int columns, int gridCellSize, GameWorld *gw ) {
 
     CellType *grid = gw->grid;
-    
+
     bool ok = false;
-    int line = 0;
-    int column = 0;
+    int targetLine = 0;
+    int targetColumn = 0;
 
     while ( !ok ) {
-        line = GetRandomValue( 1, lines-1 );
-        column = GetRandomValue( 1, columns-1 );
-        if ( grid[line*columns+column] >= P ) {
+        targetLine = GetRandomValue( 1, lines-1 );
+        targetColumn = GetRandomValue( 1, columns-1 );
+        if ( grid[targetLine*columns+targetColumn] >= P ) {
             ok = true;
         }
     }
+
+    generateNewPath( baddie, targetLine, targetColumn, lines, columns, gridCellSize, gw );
+
+}
+
+void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, int lines, int columns, int gridCellSize, GameWorld *gw ) {
+
+    CellType *grid = gw->grid;
 
     // BFS
     Vector2 p = getBaddieLineAndColumn( baddie, gridCellSize );
@@ -201,7 +240,7 @@ void generateNewPath( Baddie *baddie, int lines, int columns, int gridCellSize, 
     int queueEnd = 0;
 
     CellPos source = { p.y, p.x };
-    CellPos target = { line, column };
+    CellPos target = { targetLine, targetColumn };
     queue[queueEnd++] = source;
     queueSize++;
     marked[source.line][source.column] = true;
@@ -294,4 +333,11 @@ void generateNewPath( Baddie *baddie, int lines, int columns, int gridCellSize, 
     baddie->pathSize = pathSize;
     baddie->currentPathPos = 0;
 
+}
+
+void showCapturePoints( Baddie *baddie, Vector2 pos, int points ) {
+    baddie->showCapturePoints = true;
+    baddie->capturePointsPos.x = pos.x * GRID_CELL_SIZE;
+    baddie->capturePointsPos.y = pos.y * GRID_CELL_SIZE;
+    baddie->capturePoints = points;
 }

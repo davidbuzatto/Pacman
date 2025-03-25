@@ -1,3 +1,4 @@
+dentro da casinha, não sortear (usar outro enum)
 resolver bug de poder sair da tela?
 fugir ao entrar em modo de captura?
 capturar inimigos sendo caçados, movimentar olhinhos até a caixa central para reviverem
