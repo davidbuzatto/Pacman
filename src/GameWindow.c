@@ -98,6 +98,7 @@ void initGameWindow( GameWindow *gameWindow ) {
         }
 
         gameWindow->gw = createGameWorld();
+        SetWindowIcon( rm.icon );
 
         // game loop
         while ( !WindowShouldClose() ) {

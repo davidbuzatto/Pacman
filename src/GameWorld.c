@@ -3,7 +3,7 @@
  * @author Prof. Dr. David Buzatto
  * @brief GameWorld implementation.
  * 
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2025
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,9 +49,9 @@ const CellType templateGrid[] = {
     O, O, O, O, O, V, W, V, A, H, H, D, P, C,   D, P, C, H, H, B, V, W, V, O, O, O, O, O,
     O, O, O, O, O, V, W, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, W, V, O, O, O, O, O,
     O, O, O, O, O, V, W, V, V, P, A, H, H, M,   M, H, H, B, P, V, V, W, V, O, O, O, O, O,
-    H, H, H, H, H, D, W, C, D, P, V, P, P, P,   P, P, P, V, P, C, D, W, C, H, H, H, H, H,
-    P, P, P, P, P, P, W, P, P, P, V, P, P, P,   P, P, P, V, P, P, P, W, P, P, P, P, P, P,
-    H, H, H, H, H, B, W, A, B, P, V, P, P, P,   P, P, P, V, P, A, B, W, A, H, H, H, H, H,
+    H, H, H, H, H, D, W, C, D, P, V, G, G, G,   G, G, G, V, P, C, D, W, C, H, H, H, H, H,
+    P, P, P, P, P, P, W, P, P, P, V, G, G, G,   G, G, G, V, P, P, P, W, P, P, P, P, P, P,
+    H, H, H, H, H, B, W, A, B, P, V, G, G, G,   G, G, G, V, P, A, B, W, A, H, H, H, H, H,
     O, O, O, O, O, V, W, V, V, P, C, H, H, H,   H, H, H, D, P, V, V, W, V, O, O, O, O, O,
     O, O, O, O, O, V, W, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, W, V, O, O, O, O, O,
     O, O, O, O, O, V, W, V, V, P, A, H, H, H,   H, H, H, B, P, V, V, W, V, O, O, O, O, O,
@@ -59,7 +59,7 @@ const CellType templateGrid[] = {
     V, W, W, W, W, W, W, W, W, W, W, W, W, V,   V, W, W, W, W, W, W, W, W, W, W, W, W, V,
     V, W, A, H, H, B, W, A, H, H, H, B, W, V,   V, W, A, H, H, H, B, W, A, H, H, B, W, V,
     V, W, C, H, B, V, W, C, H, H, H, D, W, C,   D, W, C, H, H, H, D, W, V, A, H, D, W, V,
-    V, Q, W, W, V, V, W, W, W, W, W, W, W, P,   P, Q, W, W, W, W, W, W, V, V, W, W, Q, V,
+    V, Q, W, W, V, V, W, W, W, W, W, W, W, P,   P, W, W, W, W, W, W, W, V, V, W, W, Q, V,
     C, H, B, W, V, V, W, A, B, W, A, H, H, H,   H, H, H, B, W, A, B, W, V, V, W, A, H, D,
     A, H, D, W, C, D, W, V, V, W, C, H, H, B,   A, H, H, D, W, V, V, W, C, D, W, C, H, B,
     V, W, W, W, W, W, W, V, V, W, W, W, W, V,   V, W, W, W, W, V, V, W, W, W, W, W, W, V,
@@ -68,6 +68,40 @@ const CellType templateGrid[] = {
     V, W, W, W, W, W, W, W, W, W, W, W, W, W,   W, W, W, W, W, W, W, W, W, W, W, W, W, V,
     C, H, H, H, H, H, H, H, H, H, H, H, H, H,   H, H, H, H, H, H, H, H, H, H, H, H, H, D
 };
+
+/*const CellType templateGrid[] = {
+    A, H, H, H, H, H, H, H, H, H, H, H, H, B,   A, H, H, H, H, H, H, H, H, H, H, H, H, B,
+    V, P, P, P, P, P, P, P, P, P, P, P, P, V,   V, P, P, P, P, P, P, P, P, P, P, P, P, V,
+    V, P, A, H, H, B, P, A, H, H, H, B, P, V,   V, P, A, H, H, H, B, P, A, H, H, B, P, V,
+    V, P, V, O, O, V, P, V, O, O, O, V, P, V,   V, P, V, O, O, O, V, P, V, O, O, V, P, V,
+    V, P, C, H, H, D, P, C, H, H, H, D, P, C,   D, P, C, H, H, H, D, P, C, H, H, D, P, V,
+    V, P, P, P, P, P, P, P, P, P, P, P, P, P,   P, P, P, P, P, P, P, P, P, P, P, P, P, V,
+    V, P, A, H, H, B, P, A, B, P, A, H, H, H,   H, H, H, B, P, A, B, P, A, H, H, B, P, V,
+    V, P, C, H, H, D, P, V, V, P, C, H, H, B,   A, H, H, D, P, V, V, P, C, H, H, D, P, V,
+    V, P, P, P, P, P, P, V, V, P, P, P, P, V,   V, P, P, P, P, V, V, P, P, P, P, P, P, V,
+    C, H, H, H, H, B, P, V, C, H, H, B, P, V,   V, P, A, H, H, D, V, P, A, H, H, H, H, D,
+    O, O, O, O, O, V, P, V, A, H, H, D, P, C,   D, P, C, H, H, B, V, P, V, O, O, O, O, O,
+    O, O, O, O, O, V, P, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, P, V, O, O, O, O, O,
+    O, O, O, O, O, V, P, V, V, P, A, H, H, M,   M, H, H, B, P, V, V, P, V, O, O, O, O, O,
+    H, H, H, H, H, D, P, C, D, P, V, G, G, G,   G, G, G, V, P, C, D, P, C, H, H, H, H, H,
+    P, P, P, P, P, P, P, P, P, P, V, G, G, G,   G, G, G, V, P, P, P, P, P, P, P, P, P, P,
+    H, H, H, H, H, B, P, A, B, P, V, G, G, G,   G, G, G, V, P, A, B, P, A, H, H, H, H, H,
+    O, O, O, O, O, V, P, V, V, P, C, H, H, H,   H, H, H, D, P, V, V, P, V, O, O, O, O, O,
+    O, O, O, O, O, V, P, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, P, V, O, O, O, O, O,
+    O, O, O, O, O, V, P, V, V, P, A, H, H, H,   H, H, H, B, P, V, V, P, V, O, O, O, O, O,
+    A, H, H, H, H, D, P, C, D, P, C, H, H, B,   A, H, H, D, P, C, D, P, C, H, H, H, H, B,
+    V, P, P, P, P, P, P, P, P, P, P, P, P, V,   V, P, P, P, P, P, P, P, P, P, P, P, P, V,
+    V, P, A, H, H, B, P, A, H, H, H, B, P, V,   V, P, A, H, H, H, B, P, A, H, H, B, P, V,
+    V, P, C, H, B, V, P, C, H, H, H, D, P, C,   D, P, C, H, H, H, D, P, V, A, H, D, P, V,
+    V, P, P, P, V, V, P, P, P, P, P, P, P, P,   P, W, P, P, P, P, P, P, V, V, P, P, P, V,
+    C, H, B, P, V, V, P, A, B, P, A, H, H, H,   H, H, H, B, P, A, B, P, V, V, P, A, H, D,
+    A, H, D, P, C, D, P, V, V, P, C, H, H, B,   A, H, H, D, P, V, V, P, C, D, P, C, H, B,
+    V, P, P, P, P, P, P, V, V, P, P, P, P, V,   V, P, P, P, P, V, V, P, P, P, P, P, P, V,
+    V, P, A, H, H, H, H, D, C, H, H, B, P, V,   V, P, A, H, H, D, C, H, H, H, H, B, P, V,
+    V, P, C, H, H, H, H, H, H, H, H, D, P, C,   D, P, C, H, H, H, H, H, H, H, H, D, P, V,
+    V, P, P, P, P, P, P, P, P, P, P, P, P, P,   P, P, P, P, P, P, P, P, P, P, P, P, P, V,
+    C, H, H, H, H, H, H, H, H, H, H, H, H, H,   H, H, H, H, H, H, H, H, H, H, H, H, H, D
+};*/
 
 /**
  * @brief Creates a dinamically allocated GameWorld struct instance.
@@ -289,7 +323,8 @@ GameWorld* createGameWorld( void ) {
         .showBigCoin = true,
         .state = START,
         .baddieCaptureBasePoints = 200,
-        .baddieCaptureCurrentPoints = 200
+        .baddieCaptureCurrentPoints = 200,
+        .remainingCoins = 0
     };
 
     copyTemplateGrid( gw, templateGrid );
@@ -320,6 +355,10 @@ void destroyGameWorld( GameWorld *gw ) {
  */
 void inputAndUpdateGameWorld( GameWorld *gw, float delta ) {
 
+    if ( gw->remainingCoins == 0 ) {
+        gw->state = WON;
+    }
+
     if ( gw->state == RUNNING ) {
 
         gw->blinkBigCoinCounter += delta;
@@ -344,11 +383,16 @@ void inputAndUpdateGameWorld( GameWorld *gw, float delta ) {
     }
 
     if ( IsKeyPressed( KEY_ENTER ) ) {
-        if ( gw->state == START || gw->state == PAUSED || gw->player.state == DEAD ) {
-            if ( gw->player.state == DEAD ) {
-                reset( gw, gw->player.lives == 0 );
+        if ( gw->state == START || gw->state == PAUSED || gw->state == WON || gw->player.state == DEAD ) {
+            bool gameOver = gw->player.lives == 0;
+            if ( gw->state == WON || gw->player.state == DEAD ) {
+                reset( gw, gw->state == WON || gameOver );
             }
-            gw->state = RUNNING;
+            if ( gw->state == WON || gameOver ) {
+                gw->state = START;
+            } else {
+                gw->state = RUNNING;
+            }
         } else if ( gw->state == RUNNING ) {
             gw->state = PAUSED;
         }
@@ -397,6 +441,9 @@ void drawGameWorld( GameWorld *gw ) {
                     DrawRectangle( x, y + SW, SW, SW, gw->boundaryColor );
                     DrawRectangle( x + SW, y, SW, SW, gw->boundaryColor );
                     break;
+                case G:
+                    //DrawRectangle( x, y, GRID_CELL_SIZE, GRID_CELL_SIZE, BLACK );
+                    break;
                 case P:
                     //DrawRectangle( x, y, GRID_CELL_SIZE, GRID_CELL_SIZE, BLACK );
                     break;
@@ -422,10 +469,15 @@ void drawGameWorld( GameWorld *gw ) {
 
     drawPlayer( &gw->player, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
 
-    if ( gw->state == START || gw->player.state == DEAD ) {
+    if (  gw->state == WON ) {
+        const char* text = "CONGRATULATIONS!";
+        DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.7f ) );
+        DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 60 ) / 2, GetScreenHeight() / 2 - 80, 60, GREEN );
+    } else if ( gw->state == START || gw->player.state == DEAD ) {
         if ( gw->player.lives == 0 ) {
             const char* text = "GAME OVER!";
-            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, RED );
+            DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.7f ) );
+            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 60 ) / 2, GetScreenHeight() / 2 - 80, 60, RED );
         } else {
             const char* text = "READY!";
             DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
@@ -452,6 +504,8 @@ void drawGameWorld( GameWorld *gw ) {
         
     }
 
+    //DrawText( TextFormat( "%d", gw->remainingCoins ), GetScreenWidth() / 2, GetScreenHeight() - 50, 20, WHITE );
+
     EndDrawing();
 
 }
@@ -461,6 +515,7 @@ void startHuntingBaddies( GameWorld *gw ) {
     bool resetCaptureCurrentPoints = false;
 
     for ( int i = 0; i < 4; i++ ) {
+
         if ( i < BADDIES_TO_RUN ) {
 
             if ( !resetCaptureCurrentPoints && gw->baddies[i].hunting ) {
@@ -475,6 +530,7 @@ void startHuntingBaddies( GameWorld *gw ) {
         } else {
             break;
         }
+
     }
 
     if ( resetCaptureCurrentPoints ) {
@@ -534,6 +590,7 @@ void reset( GameWorld *gw, bool gameOver ) {
     player->vel.y = 0;
     player->direction = DIRECTION_RIGHT;
     player->state = ALIVE;
+    player->currentFrame = 0;
 
     for ( int i = 0; i < 4; i++ ) {
         if ( i < BADDIES_TO_RUN ) {
@@ -558,9 +615,18 @@ void reset( GameWorld *gw, bool gameOver ) {
 }
 
 void copyTemplateGrid( GameWorld *gw, const CellType *template ) {
+
+    int coins = 0;
+
     for ( int i = 0; i < GRID_LINES; i++ ) {
         for ( int j = 0; j < GRID_COLUMNS; j++ ) {
             gw->grid[i*GRID_COLUMNS+j] = template[i*GRID_COLUMNS+j];
+            if ( gw->grid[i*GRID_COLUMNS+j] == W || gw->grid[i*GRID_COLUMNS+j] == Q ) {
+                coins++;
+            }
         }
     }
+
+    gw->remainingCoins = coins;
+
 }

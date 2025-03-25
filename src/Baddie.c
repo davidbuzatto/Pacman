@@ -260,7 +260,7 @@ void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, int line
         if ( leftL >= 0 && leftL < lines &&
              leftC >= 0 && leftC < columns &&
              !marked[leftL][leftC] &&
-             grid[leftL*columns+leftC] >= P ) {
+             grid[leftL*columns+leftC] >= G ) {
 
             edgeTo[leftL][leftC] = v;
             marked[leftL][leftC] = true;
@@ -275,7 +275,7 @@ void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, int line
         if ( rightL >= 0 && rightL < lines &&
              rightC >= 0 && rightC < columns &&
              !marked[rightL][rightC] &&
-             grid[rightL*columns+rightC] >= P ) {
+             grid[rightL*columns+rightC] >= G ) {
 
             edgeTo[rightL][rightC] = v;
             marked[rightL][rightC] = true;
@@ -290,7 +290,7 @@ void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, int line
         if ( upL >= 0 && upL < lines &&
              upC >= 0 && upC < columns &&
              !marked[upL][upC] &&
-             grid[upL*columns+upC] >= P ) {
+             grid[upL*columns+upC] >= G ) {
 
             edgeTo[upL][upC] = v;
             marked[upL][upC] = true;
@@ -305,7 +305,7 @@ void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, int line
         if ( downL >= 0 && downL < lines &&
              downC >= 0 && downC < columns &&
              !marked[downL][downC] &&
-             grid[downL*columns+downC] >= P ) {
+             grid[downL*columns+downC] >= G ) {
 
             edgeTo[downL][downC] = v;
             marked[downL][downC] = true;

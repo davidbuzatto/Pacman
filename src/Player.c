@@ -57,13 +57,13 @@ void inputAndUpdatePlayer( Player *player, float delta, int lines, int columns, 
         // collision
         if ( y >= 0 && y < lines ) {
             if ( xL >= 0 && xL < columns ) {
-                if ( grid[y*columns+xL] < P ) {
+                if ( grid[y*columns+xL] < P || grid[y*columns+xL] == M ) {
                     player->pos.x = (xL+1) * gridCellSize + player->radius;
                     player->vel.x = 0;
                 }
             }
             if ( xR >= 0 && xR < columns ) {
-                if ( grid[y*columns+xR] < P ) {
+                if ( grid[y*columns+xR] < P || grid[y*columns+xR] == M ) {
                     player->pos.x = xR * gridCellSize - player->radius;
                     player->vel.x = 0;
                 }
@@ -72,13 +72,13 @@ void inputAndUpdatePlayer( Player *player, float delta, int lines, int columns, 
 
         if ( x >= 0 && x < columns ) {
             if ( yU >= 0 && yU < lines ) {
-                if ( grid[yU*columns+x] < P ) {
+                if ( grid[yU*columns+x] < P || grid[yU*columns+x] == M ) {
                     player->pos.y = (yU+1) * gridCellSize + player->radius;
                     player->vel.y = 0;
                 }
             }
             if ( yD >= 0 && yD < lines ) {
-                if ( grid[yD*columns+x] < P ) {
+                if ( grid[yD*columns+x] < P || grid[yD*columns+x] == M ) {
                     player->pos.y = yD * gridCellSize - player->radius;
                     player->vel.y = 0;
                 }
@@ -102,9 +102,11 @@ void inputAndUpdatePlayer( Player *player, float delta, int lines, int columns, 
             if ( grid[y*columns+x] == W ) {
                 grid[y*columns+x] = P;
                 player->points += 10;
+                gw->remainingCoins--;
             } else if ( grid[y*columns+x] == Q ) {
                 grid[y*columns+x] = P;
                 player->points += 50;
+                gw->remainingCoins--;
                 startHuntingBaddies( gw );
             }
         }

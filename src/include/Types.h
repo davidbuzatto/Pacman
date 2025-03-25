@@ -26,6 +26,7 @@ typedef enum State {
     START,
     RUNNING,
     PAUSED,
+    WON,
     PLAYER_DYING,
     ALIVE,
     DYING,
@@ -114,4 +115,5 @@ typedef struct GameWorld {
     State state;
     int baddieCaptureBasePoints;
     int baddieCaptureCurrentPoints;
+    int remainingCoins;
 } GameWorld;
