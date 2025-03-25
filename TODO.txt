@@ -1,7 +1,9 @@
-dentro da casinha, não sortear (usar outro enum)
-resolver bug de poder sair da tela?
-fugir ao entrar em modo de captura?
-capturar inimigos sendo caçados, movimentar olhinhos até a caixa central para reviverem
-ao comer fantasmas: 200, 400, 800, 1600 pontos
-Exemplo gameplay:
+- Time to refactorings and code sanitization!
+- Implement different behaviors for each phantom;
+- Make phathon escape pacman when vulnerable;
+
+- Bug or feature?
+    - You can walk outside the grid :D
+
+Gameplay example:
 https://youtu.be/dScq4P5gn4A
