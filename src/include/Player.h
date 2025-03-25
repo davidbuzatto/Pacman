@@ -7,4 +7,3 @@ void inputAndUpdatePlayer( Player *player, float delta, int lines, int columns, 
 void drawPlayer( Player *player, int lines, int columns, int gridCellSize );
 Vector2 getPlayerLineAndColumn( Player *player, int gridCellSize );
 Vector2 getLineAndColumnFromPos( Vector2 pos, int gridCellSize );
-

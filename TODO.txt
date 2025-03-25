@@ -1,3 +1,4 @@
+- Add sounds and joystick support;
 - Time to refactorings and code sanitization!
 - Implement different behaviors for each phantom;
 - Make phathon escape pacman when vulnerable;
