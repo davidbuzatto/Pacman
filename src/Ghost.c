@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include "Types.h"
-#include "Baddie.h"
+#include "Ghost.h"
 #include "ResourceManager.h"
 #include "utils.h"
 
@@ -9,9 +9,9 @@
 
 const int SPRITE_MAP_START_X[] = { 2, 66, 130, 194 };
 
-Baddie createNewBaddie( int line, int column, int ySource, Color color ) {
+Ghost createNewGhost( int line, int column, int ySource, const char *name, Color color ) {
 
-    return (Baddie) {
+    return (Ghost) {
 
         .startPos = {
             .x = column * GRID_CELL_SIZE,
@@ -29,6 +29,7 @@ Baddie createNewBaddie( int line, int column, int ySource, Color color ) {
         .radius = GRID_CELL_SIZE / 2,
         .spriteMap = rm.spriteMap,
         .ySource = ySource,
+        .name = name,
         .color = color,
 
         .currentFrame = 0,
@@ -36,9 +37,9 @@ Baddie createNewBaddie( int line, int column, int ySource, Color color ) {
         .timeToNextFrame = 0.1,
         .frameTimeCounter = 0,
 
-        .hunting = true,
-        .timeToReturnToHunt = 5,
-        .returnToHuntCounter = 0,
+        .chasing = true,
+        .timeToReturnToChase = 5,
+        .returnToChaseCounter = 0,
 
         .blink = false,
         .timeToStartBlinking = 3,
@@ -62,42 +63,42 @@ Baddie createNewBaddie( int line, int column, int ySource, Color color ) {
 
 }
 
-void updateBaddie( Baddie *baddie, float delta, GameWorld *gw ) {
+void updateGhost( Ghost *ghost, float delta, GameWorld *gw ) {
 
     // counters and graphical state
-    baddie->frameTimeCounter += delta;
-    if ( baddie->frameTimeCounter > baddie->timeToNextFrame ) {
-        baddie->frameTimeCounter = 0;
-        baddie->currentFrame = ( baddie->currentFrame + 1 ) % baddie->maxFrames;
+    ghost->frameTimeCounter += delta;
+    if ( ghost->frameTimeCounter > ghost->timeToNextFrame ) {
+        ghost->frameTimeCounter = 0;
+        ghost->currentFrame = ( ghost->currentFrame + 1 ) % ghost->maxFrames;
     }
 
-    if ( !baddie->hunting ) {
-        baddie->returnToHuntCounter += delta;
-        if ( baddie->returnToHuntCounter > baddie->timeToReturnToHunt ) {
-            baddie->hunting = true;
-            baddie->returnToHuntCounter = 0;
-            baddie->blinkCounter = 0;
-            baddie->blink = false;
+    if ( !ghost->chasing ) {
+        ghost->returnToChaseCounter += delta;
+        if ( ghost->returnToChaseCounter > ghost->timeToReturnToChase ) {
+            ghost->chasing = true;
+            ghost->returnToChaseCounter = 0;
+            ghost->blinkCounter = 0;
+            ghost->blink = false;
         }
-        if ( baddie->returnToHuntCounter > baddie->timeToStartBlinking ) {
-            baddie->blinkCounter += delta;
-            if ( baddie->blinkCounter > baddie->timeToBlink ) {
-                baddie->blinkCounter = 0;
-                baddie->blink = !baddie->blink;
+        if ( ghost->returnToChaseCounter > ghost->timeToStartBlinking ) {
+            ghost->blinkCounter += delta;
+            if ( ghost->blinkCounter > ghost->timeToBlink ) {
+                ghost->blinkCounter = 0;
+                ghost->blink = !ghost->blink;
             }
         }
     }
 
     // path generation
-    if ( baddie->currentPathPos == baddie->pathSize ) {
-        baddie->currentPathPos = -1;
-        baddie->vel.x = 0;
-        baddie->vel.y = 0;
-        generateNewRandomPath( baddie, gw );
-        if ( baddie->state == RETURNING_HOME ) {
-            baddie->hunting = true;
-            baddie->blink = false;
-            baddie->state = ALIVE;
+    if ( ghost->currentPathPos == ghost->pathSize ) {
+        ghost->currentPathPos = -1;
+        ghost->vel.x = 0;
+        ghost->vel.y = 0;
+        generateNewRandomPath( ghost, gw );
+        if ( ghost->state == RETURNING_HOME ) {
+            ghost->chasing = true;
+            ghost->blink = false;
+            ghost->state = ALIVE;
         }
     }
 
@@ -105,61 +106,61 @@ void updateBaddie( Baddie *baddie, float delta, GameWorld *gw ) {
     int destX = -1;
     int destY = -1;
 
-    if ( baddie->currentPathPos != -1 ) {
+    if ( ghost->currentPathPos != -1 ) {
 
-        destX = baddie->path[baddie->currentPathPos].column * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
-        destY = baddie->path[baddie->currentPathPos].line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+        destX = ghost->path[ghost->currentPathPos].column * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+        destY = ghost->path[ghost->currentPathPos].line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
 
-        if ( destX < baddie->pos.x ) {
-            baddie->vel.x = -baddie->walkingSpeed;
-            baddie->direction = DIRECTION_LEFT;
-        } else if ( destX > baddie->pos.x ) {
-            baddie->vel.x = baddie->walkingSpeed;
-            baddie->direction = DIRECTION_RIGHT;
+        if ( destX < ghost->pos.x ) {
+            ghost->vel.x = -ghost->walkingSpeed;
+            ghost->direction = DIRECTION_LEFT;
+        } else if ( destX > ghost->pos.x ) {
+            ghost->vel.x = ghost->walkingSpeed;
+            ghost->direction = DIRECTION_RIGHT;
         } else {
-            baddie->vel.x = 0;
+            ghost->vel.x = 0;
         }
         
-        if ( destY < baddie->pos.y ) {
-            baddie->vel.y = -baddie->walkingSpeed;
-            baddie->direction = DIRECTION_UP;
-        } else if ( destY > baddie->pos.y ) {
-            baddie->vel.y = baddie->walkingSpeed;
-            baddie->direction = DIRECTION_DOWN;
+        if ( destY < ghost->pos.y ) {
+            ghost->vel.y = -ghost->walkingSpeed;
+            ghost->direction = DIRECTION_UP;
+        } else if ( destY > ghost->pos.y ) {
+            ghost->vel.y = ghost->walkingSpeed;
+            ghost->direction = DIRECTION_DOWN;
         } else {
-            baddie->vel.y = 0;
+            ghost->vel.y = 0;
         }
 
     }
 
-    baddie->pos.x += baddie->vel.x * delta;
-    baddie->pos.y += baddie->vel.y * delta;
+    ghost->pos.x += ghost->vel.x * delta;
+    ghost->pos.y += ghost->vel.y * delta;
 
     // path walking
     if ( destX != -1 || destY != -1 ) {
-        switch ( baddie->direction ) {
+        switch ( ghost->direction ) {
             case DIRECTION_LEFT:
-                if ( baddie->pos.x < destX ) {
-                    baddie->pos.x = destX;
-                    baddie->currentPathPos++;
+                if ( ghost->pos.x < destX ) {
+                    ghost->pos.x = destX;
+                    ghost->currentPathPos++;
                 }
                 break;
             case DIRECTION_RIGHT:
-                if ( baddie->pos.x > destX ) {
-                    baddie->pos.x = destX;
-                    baddie->currentPathPos++;
+                if ( ghost->pos.x > destX ) {
+                    ghost->pos.x = destX;
+                    ghost->currentPathPos++;
                 }
                 break;
             case DIRECTION_UP:
-                if ( baddie->pos.y < destY ) {
-                    baddie->pos.y = destY;
-                    baddie->currentPathPos++;
+                if ( ghost->pos.y < destY ) {
+                    ghost->pos.y = destY;
+                    ghost->currentPathPos++;
                 }
                 break;
             case DIRECTION_DOWN:
-                if ( baddie->pos.y > destY ) {
-                    baddie->pos.y = destY;
-                    baddie->currentPathPos++;
+                if ( ghost->pos.y > destY ) {
+                    ghost->pos.y = destY;
+                    ghost->currentPathPos++;
                 }
                 break;
         }
@@ -167,44 +168,44 @@ void updateBaddie( Baddie *baddie, float delta, GameWorld *gw ) {
     }
 
     // points from capturing
-    if ( baddie->showCapturePoints ) {
-        baddie->showPointsCounter += delta;
-        if ( baddie->showPointsCounter > baddie->timeToShowPoints ) {
-            baddie->showPointsCounter = 0;
-            baddie->showCapturePoints = false;
+    if ( ghost->showCapturePoints ) {
+        ghost->showPointsCounter += delta;
+        if ( ghost->showPointsCounter > ghost->timeToShowPoints ) {
+            ghost->showPointsCounter = 0;
+            ghost->showCapturePoints = false;
         }
     }
 
 }
 
-void drawBaddie( Baddie *baddie ) {
+void drawGhost( Ghost *ghost ) {
 
-    /*for ( int i = 0; i < baddie->pathSize - 1; i++ ) {
-        CellPos *p1 = &baddie->path[i];
-        CellPos *p2 = &baddie->path[i+1];
+    /*for ( int i = 0; i < ghost->pathSize - 1; i++ ) {
+        CellPos *p1 = &ghost->path[i];
+        CellPos *p2 = &ghost->path[i+1];
         DrawLine( 
             p1->column * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
             p1->line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
             p2->column * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
             p2->line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
-            baddie->color
+            ghost->color
         );
     }*/
 
     int xStart = 0;
-    int yStart = baddie->ySource;
+    int yStart = ghost->ySource;
 
-    if ( baddie->state == ALIVE ) {
+    if ( ghost->state == ALIVE ) {
 
-        if ( baddie->hunting ) {
-            switch ( baddie->direction ) {
+        if ( ghost->chasing ) {
+            switch ( ghost->direction ) {
                 case DIRECTION_LEFT: xStart = SPRITE_MAP_START_X[1]; break;
                 case DIRECTION_RIGHT: xStart = SPRITE_MAP_START_X[0]; break;
                 case DIRECTION_UP: xStart = SPRITE_MAP_START_X[2]; break;
                 case DIRECTION_DOWN: xStart = SPRITE_MAP_START_X[3]; break;
             }
         } else {
-            if ( baddie->blink ) {
+            if ( ghost->blink ) {
                 xStart = 322;
                 yStart = 130;
             } else {
@@ -213,12 +214,12 @@ void drawBaddie( Baddie *baddie ) {
             }
         }
 
-        xStart += baddie->currentFrame * 32;
+        xStart += ghost->currentFrame * 32;
         
-    } else if ( baddie->state == RETURNING_HOME ) {
+    } else if ( ghost->state == RETURNING_HOME ) {
         xStart = 258;
         yStart = 162;
-        switch ( baddie->direction ) {
+        switch ( ghost->direction ) {
             case DIRECTION_LEFT: xStart += 32; break;
             case DIRECTION_RIGHT: xStart += 0; break;
             case DIRECTION_UP: xStart += 64; break;
@@ -227,28 +228,30 @@ void drawBaddie( Baddie *baddie ) {
     }
 
     DrawTexturePro( 
-        baddie->spriteMap, 
+        ghost->spriteMap, 
         (Rectangle){ xStart, yStart, 28, 28 }, 
-        (Rectangle){ baddie->pos.x - 18, baddie->pos.y - 18, 36, 36 }, 
+        (Rectangle){ ghost->pos.x - 18, ghost->pos.y - 18, 36, 36 }, 
         (Vector2){ 0, 0 }, 
         0.0f, 
         WHITE
     );
 
-    if ( baddie->showCapturePoints ) {
-        const char *text = TextFormat( "%d", baddie->capturePoints );
+    if ( ghost->showCapturePoints ) {
+        const char *text = TextFormat( "%d", ghost->capturePoints );
         DrawText( 
             text, 
-            baddie->capturePointsPos.x - MeasureText( text, 20 ) / 2,
-            baddie->capturePointsPos.y - 20,
+            ghost->capturePointsPos.x - MeasureText( text, 20 ) / 2,
+            ghost->capturePointsPos.y - 20,
             20,
             RAYWHITE
         );
     }
 
+    //DrawText( ghost->name, ghost->pos.x + 30, ghost->pos.y, 20, ghost->color );
+
 }
 
-void generateNewRandomPath( Baddie *baddie, GameWorld *gw ) {
+void generateNewRandomPath( Ghost *ghost, GameWorld *gw ) {
 
     CellType *grid = gw->grid;
 
@@ -264,13 +267,13 @@ void generateNewRandomPath( Baddie *baddie, GameWorld *gw ) {
         }
     }
 
-    generateNewPath( baddie, targetLine, targetColumn, gw );
+    generateNewPath( ghost, targetLine, targetColumn, gw );
 
 }
 
-void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, GameWorld *gw ) {
+void generateNewPath( Ghost *ghost, int targetLine, int targetColumn, GameWorld *gw ) {
 
-    Vector2 p = getLineAndColumn( baddie->pos );
+    Vector2 p = getLineAndColumn( ghost->pos );
     CellPos source = { p.y, p.x };
     CellPos target = { targetLine, targetColumn };
 
@@ -312,13 +315,13 @@ void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, GameWorl
     current = target;
     int i = 0;
     while ( current.line != source.line || current.column != source.column ) {        
-        baddie->path[pathSize-i-1] = current;
+        ghost->path[pathSize-i-1] = current;
         current = gw->edgeTo[current.line][current.column];
         i++;
     }
 
-    baddie->pathSize = pathSize;
-    baddie->currentPathPos = 0;
+    ghost->pathSize = pathSize;
+    ghost->currentPathPos = 0;
 
 }
 
@@ -338,9 +341,9 @@ void visitNeightbor( int line, int column, CellPos cell, int *queueSize, int *qu
 
 }
 
-void showCapturePoints( Baddie *baddie, Vector2 pos, int points ) {
-    baddie->showCapturePoints = true;
-    baddie->capturePointsPos.x = pos.x * GRID_CELL_SIZE;
-    baddie->capturePointsPos.y = pos.y * GRID_CELL_SIZE;
-    baddie->capturePoints = points;
+void showCapturePoints( Ghost *ghost, Vector2 pos, int points ) {
+    ghost->showCapturePoints = true;
+    ghost->capturePointsPos.x = pos.x * GRID_CELL_SIZE;
+    ghost->capturePointsPos.y = pos.y * GRID_CELL_SIZE;
+    ghost->capturePoints = points;
 }

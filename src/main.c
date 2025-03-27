@@ -17,7 +17,7 @@ int main( void ) {
     GameWindow *gameWindow = createGameWindow(
         672,             // width
         800,             // height
-        "Pacman",        // title
+        "Pac-Man",       // title
         60,              // target FPS
         true,            // antialiasing
         false,           // resizable

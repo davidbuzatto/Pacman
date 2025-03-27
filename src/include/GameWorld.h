@@ -10,8 +10,8 @@
 #include <stdbool.h>
 
 #include "Types.h"
-#include "Player.h"
-#include "Baddie.h"
+#include "Pacman.h"
+#include "Ghost.h"
 
 /**
  * @brief Creates a dinamically allocated GameWorld struct instance.
@@ -36,8 +36,8 @@ void drawGameWorld( GameWorld *gw );
 void drawGrid( GameWorld *gw );
 void drawMessages( GameWorld *gw );
 
-void startHuntingBaddies( GameWorld *gw );
-void resolvePlayerBaddieCollision( GameWorld *gw );
+void startScatterGhosts( GameWorld *gw );
+void resolvePacmanGhostCollision( GameWorld *gw );
 
 void resetGame( GameWorld *gw, bool gameOver );
 

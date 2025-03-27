@@ -22,7 +22,6 @@
 
 const bool DEBUG_GRID = false;
 const bool IMMORTAL = false;
-const int BADDIES_TO_RUN = 4;
 
 const CellType templateGrid[] = {
     A, H, H, H, H, H, H, H, H, H, H, H, H, B,   A, H, H, H, H, H, H, H, H, H, H, H, H, B,
@@ -67,12 +66,12 @@ GameWorld* createGameWorld( void ) {
     
     *gw = (GameWorld) {
         .grid = {0},
-        .player = createNewPlayer(),
-        .baddies = {
-            createNewBaddie( 11, 14, 130, (Color){ 255, 21, 0, 255 } ),
-            createNewBaddie( 14, 12, 194, (Color){ 0, 232, 255, 255 } ),
-            createNewBaddie( 14, 14, 162, (Color){ 255, 196, 253, 255 } ),
-            createNewBaddie( 14, 16, 226, (Color){ 255, 183, 80, 255 } )
+        .pacman = createNewPacman( 23, 14 ),
+        .ghosts = {
+            createNewGhost( 11, 14, 130, "Blinky", (Color){ 255, 21, 0, 255 } ),
+            createNewGhost( 14, 12, 194, "Inky", (Color){ 0, 232, 255, 255 } ),
+            createNewGhost( 14, 14, 162, "Pinky", (Color){ 255, 196, 253, 255 } ),
+            createNewGhost( 14, 16, 226, "Clyde", (Color){ 255, 183, 80, 255 } )
         },
         .boundaryColor = { 35, 44, 218, 255 },
         .doorColor = { 255, 171, 255, 255 },
@@ -84,8 +83,8 @@ GameWorld* createGameWorld( void ) {
         .blinkBigCoinCounter = 0,
         .showBigCoin = true,
 
-        .baddieCaptureBasePoints = 200,
-        .baddieCaptureCurrentPoints = 200,
+        .ghostCaptureBasePoints = 200,
+        .ghostCaptureCurrentPoints = 200,
         .remainingCoins = 0,
 
         .marked = { 0 },
@@ -96,17 +95,13 @@ GameWorld* createGameWorld( void ) {
 
     };
 
-    gw->smallCoinRadius = gw->player.radius * 0.3f;
-    gw->bigCoinRadius = gw->player.radius * 0.8f;
+    gw->smallCoinRadius = gw->pacman.radius * 0.3f;
+    gw->bigCoinRadius = gw->pacman.radius * 0.8f;
 
     copyTemplateGrid( gw, templateGrid );
     
     for ( int i = 0; i < 4; i++ ) {
-        if ( i < BADDIES_TO_RUN ) {
-            generateNewRandomPath( &gw->baddies[i], gw );
-        } else {
-            break;
-        }
+        generateNewRandomPath( &gw->ghosts[i], gw );
     }
 
     return gw;
@@ -126,9 +121,9 @@ void destroyGameWorld( GameWorld *gw ) {
 void inputAndUpdateGameWorld( GameWorld *gw, float delta ) {
 
     if ( IsKeyPressed( KEY_ENTER ) ) {
-        if ( gw->state == START || gw->state == PAUSED || gw->state == WON || gw->player.state == DEAD ) {
-            bool gameOver = gw->player.lives == 0;
-            if ( gw->state == WON || gw->player.state == DEAD ) {
+        if ( gw->state == START || gw->state == PAUSED || gw->state == WON || gw->pacman.state == DEAD ) {
+            bool gameOver = gw->pacman.lives == 0;
+            if ( gw->state == WON || gw->pacman.state == DEAD ) {
                 resetGame( gw, gw->state == WON || gameOver );
             }
             if ( gw->state == WON || gameOver ) {
@@ -154,18 +149,14 @@ void inputAndUpdateGameWorld( GameWorld *gw, float delta ) {
         }
 
         for ( int i = 0; i < 4; i++ ) {
-            if ( i < BADDIES_TO_RUN ) {
-                updateBaddie( &gw->baddies[i], delta, gw );
-            } else {
-                break;
-            }
+            updateGhost( &gw->ghosts[i], delta, gw );
         }
 
-        inputAndUpdatePlayer( &gw->player, delta, gw );
-        resolvePlayerBaddieCollision( gw );
+        inputAndUpdatePacman( &gw->pacman, delta, gw );
+        resolvePacmanGhostCollision( gw );
 
     } else if ( gw->state == PLAYER_DYING ) {
-        inputAndUpdatePlayer( &gw->player, delta, gw );
+        inputAndUpdatePacman( &gw->pacman, delta, gw );
     }
 
 }
@@ -181,14 +172,10 @@ void drawGameWorld( GameWorld *gw ) {
     drawGrid( gw );
 
     for ( int i = 0; i < 4; i++ ) {
-        if ( i < BADDIES_TO_RUN ) {
-            drawBaddie( &gw->baddies[i] );
-        } else {
-            break;
-        }
+        drawGhost( &gw->ghosts[i] );
     }
 
-    drawPlayer( &gw->player );
+    drawPacman( &gw->pacman );
     drawMessages( gw ) ;
 
     if ( DEBUG_GRID ) {
@@ -272,85 +259,74 @@ void drawMessages( GameWorld *gw ) {
         const char* text = "CONGRATULATIONS!";
         DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.7f ) );
         DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 60 ) / 2, GetScreenHeight() / 2 - 80, 60, GREEN );
-    } else if ( gw->state == START || gw->player.state == DEAD ) {
-        if ( gw->player.lives == 0 ) {
+    } else if ( gw->state == START || gw->pacman.state == DEAD ) {
+        if ( gw->pacman.lives == 0 ) {
             const char* text = "GAME OVER!";
             DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.7f ) );
             DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 60 ) / 2, GetScreenHeight() / 2 - 80, 60, RED );
         } else {
             const char* text = "READY!";
-            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
+            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->pacman.color );
         }
     } else if ( gw->state == PAUSED ) {
         const char* text = "PAUSED!";
-        DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
+        DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->pacman.color );
     }
 
 }
 
-void startHuntingBaddies( GameWorld *gw ) {
+void startScatterGhosts( GameWorld *gw ) {
 
     bool resetCaptureCurrentPoints = false;
 
     for ( int i = 0; i < 4; i++ ) {
 
-        if ( i < BADDIES_TO_RUN ) {
-
-            if ( !resetCaptureCurrentPoints && gw->baddies[i].hunting ) {
-                resetCaptureCurrentPoints = true;
-            }
-
-            gw->baddies[i].hunting = false;
-            gw->baddies[i].returnToHuntCounter = 0;
-            gw->baddies[i].blinkCounter = 0;
-            gw->baddies[i].blink = false;
-
-        } else {
-            break;
+        if ( !resetCaptureCurrentPoints && gw->ghosts[i].chasing ) {
+            resetCaptureCurrentPoints = true;
         }
+
+        gw->ghosts[i].chasing = false;
+        gw->ghosts[i].returnToChaseCounter = 0;
+        gw->ghosts[i].blinkCounter = 0;
+        gw->ghosts[i].blink = false;
 
     }
 
     if ( resetCaptureCurrentPoints ) {
-        gw->baddieCaptureCurrentPoints = gw->baddieCaptureBasePoints;
+        gw->ghostCaptureCurrentPoints = gw->ghostCaptureBasePoints;
     }
 
 }
 
-void resolvePlayerBaddieCollision( GameWorld *gw ) {
+void resolvePacmanGhostCollision( GameWorld *gw ) {
 
-    Player *player = &gw->player;
+    Pacman *pacman = &gw->pacman;
     
     for ( int i = 0; i < 4; i++ ) {
-        if ( i < BADDIES_TO_RUN ) {
 
-            Baddie *b = &gw->baddies[i];
+        Ghost *g = &gw->ghosts[i];
 
-            if ( CheckCollisionCircles( player->pos, player->radius, b->pos, b->radius ) ) {
+        if ( CheckCollisionCircles( pacman->pos, pacman->radius, g->pos, g->radius ) ) {
 
-                if ( b->hunting ) {
-                    if ( !IMMORTAL && b->state != RETURNING_HOME ) {
-                        gw->state = PLAYER_DYING;
-                        player->lives--;
-                        player->dyingCurrentFrame = 0;
-                        player->dyingFrameTimeCounter = 0;
-                        player->state = DYING;
-                    }
-                } else if ( b->state != RETURNING_HOME ) {
-                    b->state = RETURNING_HOME;
-                    b->currentPathPos = -1;
-                    b->vel.x = 0;
-                    b->vel.y = 0;
-                    player->points += gw->baddieCaptureCurrentPoints;
-                    showCapturePoints( b, getLineAndColumn( b->pos ), gw->baddieCaptureCurrentPoints );
-                    gw->baddieCaptureCurrentPoints *= 2;
-                    generateNewPath( b, 14, GetRandomValue( 13, 14 ), gw );
+            if ( g->chasing ) {
+                if ( !IMMORTAL && g->state != RETURNING_HOME ) {
+                    gw->state = PLAYER_DYING;
+                    pacman->lives--;
+                    pacman->dyingCurrentFrame = 0;
+                    pacman->dyingFrameTimeCounter = 0;
+                    pacman->state = DYING;
                 }
-
+            } else if ( g->state != RETURNING_HOME ) {
+                g->state = RETURNING_HOME;
+                g->currentPathPos = -1;
+                g->vel.x = 0;
+                g->vel.y = 0;
+                pacman->points += gw->ghostCaptureCurrentPoints;
+                showCapturePoints( g, getLineAndColumn( g->pos ), gw->ghostCaptureCurrentPoints );
+                gw->ghostCaptureCurrentPoints *= 2;
+                generateNewPath( g, 14, GetRandomValue( 13, 14 ), gw );
             }
 
-        } else {
-            break;
         }
 
     }
@@ -359,30 +335,26 @@ void resolvePlayerBaddieCollision( GameWorld *gw ) {
 
 void resetGame( GameWorld *gw, bool gameOver ) {
 
-    Player *player = &gw->player;
-    player->pos = player->startPos;
-    player->vel.x = 0;
-    player->vel.y = 0;
-    player->direction = DIRECTION_RIGHT;
-    player->state = ALIVE;
-    player->currentFrame = 0;
+    Pacman *pacman = &gw->pacman;
+    pacman->pos = pacman->startPos;
+    pacman->vel.x = 0;
+    pacman->vel.y = 0;
+    pacman->direction = DIRECTION_RIGHT;
+    pacman->state = ALIVE;
+    pacman->currentFrame = 0;
 
     for ( int i = 0; i < 4; i++ ) {
-        if ( i < BADDIES_TO_RUN ) {
-            Baddie *b = &gw->baddies[i];
-            b->hunting = true;
-            b->state = ALIVE;
-            b->direction = DIRECTION_RIGHT;
-            b->pos = b->startPos;
-            generateNewRandomPath( b, gw );
-        } else {
-            break;
-        }
+        Ghost *g = &gw->ghosts[i];
+        g->chasing = true;
+        g->state = ALIVE;
+        g->direction = DIRECTION_RIGHT;
+        g->pos = g->startPos;
+        generateNewRandomPath( g, gw );
     }
 
     if ( gameOver ) {
-        player->lives = 5;
-        player->points = 0;
+        pacman->lives = 5;
+        pacman->points = 0;
         copyTemplateGrid( gw, templateGrid );
         gw->showBigCoin = true;
     }

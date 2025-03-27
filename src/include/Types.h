@@ -19,11 +19,11 @@ typedef enum CellType {
     C,  // bottom-left boundary
     D,  // bottom-right boundary
 
-    // only accessible by baddies
+    // only accessible by ghosts
     G,  // ghost house
     M,  // monster door
 
-    // acessible by player and baddies
+    // acessible by pacman and ghosts
     P,  // path
     W,  // small coin
     Q,  // big coin
@@ -39,7 +39,7 @@ typedef enum State {
     WON,
     PLAYER_DYING,
 
-    // player and baddie states
+    // pacman and ghost states
     ALIVE,
     DYING,
     DEAD,
@@ -59,7 +59,7 @@ typedef struct CellPos {
     int column;
 } CellPos;
 
-typedef struct Player {
+typedef struct Pacman {
 
     Vector2 startPos;
     Vector2 pos;
@@ -84,9 +84,9 @@ typedef struct Player {
     Direction direction;
     State state;
 
-} Player;
+} Pacman;
 
-typedef struct Baddie {
+typedef struct Ghost {
 
     Vector2 startPos;
     Vector2 pos;
@@ -96,15 +96,16 @@ typedef struct Baddie {
     Texture2D spriteMap;
     int ySource;
     Color color;
+    const char *name;
 
     int currentFrame;
     int maxFrames;
     float timeToNextFrame;
     float frameTimeCounter;
 
-    bool hunting;
-    float timeToReturnToHunt;
-    float returnToHuntCounter;
+    bool chasing;
+    float timeToReturnToChase;
+    float returnToChaseCounter;
 
     bool blink;
     float timeToStartBlinking;
@@ -124,13 +125,13 @@ typedef struct Baddie {
     Direction direction;
     State state;
 
-} Baddie;
+} Ghost;
 
 typedef struct GameWorld {
 
     CellType grid[GRID_LINES*GRID_COLUMNS];
-    Player player;
-    Baddie baddies[4];
+    Pacman pacman;
+    Ghost ghosts[4];
 
     Color boundaryColor;
     Color doorColor;
@@ -142,8 +143,8 @@ typedef struct GameWorld {
     float blinkBigCoinCounter;
     bool showBigCoin;
     
-    int baddieCaptureBasePoints;
-    int baddieCaptureCurrentPoints;
+    int ghostCaptureBasePoints;
+    int ghostCaptureCurrentPoints;
     int remainingCoins;
 
     // BFS data structures
