@@ -7,8 +7,6 @@
 
 #include "raylib/raylib.h"
 
-const int SPRITE_MAP_START_X[] = { 2, 66, 130, 194 };
-
 Ghost createNewGhost( int line, int column, int ySource, const char *name, Color color ) {
 
     return (Ghost) {
@@ -192,19 +190,21 @@ void drawGhost( Ghost *ghost ) {
         );
     }*/
 
-    int xStart = 0;
+    int xStart = 2;
     int yStart = ghost->ySource;
 
     if ( ghost->state == ALIVE ) {
 
         if ( ghost->chasing ) {
             switch ( ghost->direction ) {
-                case DIRECTION_LEFT: xStart = SPRITE_MAP_START_X[1]; break;
-                case DIRECTION_RIGHT: xStart = SPRITE_MAP_START_X[0]; break;
-                case DIRECTION_UP: xStart = SPRITE_MAP_START_X[2]; break;
-                case DIRECTION_DOWN: xStart = SPRITE_MAP_START_X[3]; break;
+                // sprite map offsets
+                case DIRECTION_LEFT: xStart += 64; break;
+                case DIRECTION_RIGHT: xStart += 0; break;
+                case DIRECTION_UP: xStart += 128; break;
+                case DIRECTION_DOWN: xStart += 192; break;
             }
         } else {
+            // scatter mode sprite position in sprite map
             if ( ghost->blink ) {
                 xStart = 322;
                 yStart = 130;
@@ -217,9 +217,11 @@ void drawGhost( Ghost *ghost ) {
         xStart += ghost->currentFrame * 32;
         
     } else if ( ghost->state == RETURNING_HOME ) {
+        // eyes position in sprite map
         xStart = 258;
         yStart = 162;
         switch ( ghost->direction ) {
+            // sprite map offsets
             case DIRECTION_LEFT: xStart += 32; break;
             case DIRECTION_RIGHT: xStart += 0; break;
             case DIRECTION_UP: xStart += 64; break;
