@@ -1,9 +1,54 @@
 #include "Types.h"
 #include "GameWorld.h"
 #include "Player.h"
+#include "utils.h"
+
 #include "raylib/raylib.h"
 
-void inputAndUpdatePlayer( Player *player, float delta, int lines, int columns, int gridCellSize, GameWorld *gw ) {
+const int PLAYER_LINE = 23;
+const int PLAYER_COLUMN = 14;
+
+Player createNewPlayer( void ) {
+
+    return (Player) {
+
+        .startPos = {
+            .x = PLAYER_COLUMN * GRID_CELL_SIZE,
+            .y = PLAYER_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
+        },
+        .pos = {
+            .x = PLAYER_COLUMN * GRID_CELL_SIZE,
+            .y = PLAYER_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
+        },
+        .vel = {
+            .x = 0,
+            .y = 0
+        },
+        .walkingSpeed = 250,
+        .radius = GRID_CELL_SIZE / 2,
+        .color = { 255, 239, 0, 255 },
+
+        .lives = 5,
+        .points = 0,
+
+        .currentFrame = 0,
+        .maxFrames = 3,
+        .timeToNextFrame = 0.05,
+        .frameTimeCounter = 0,
+
+        .dyingCurrentFrame = 0,
+        .dyingMaxFrames = 11,
+        .dyingTimeToNextFrame = 0.05,
+        .dyingFrameTimeCounter = 0,
+
+        .direction = DIRECTION_RIGHT,
+        .state = ALIVE
+
+    };
+
+}
+
+void inputAndUpdatePlayer( Player *player, float delta, GameWorld *gw ) {
 
     CellType *grid = gw->grid;
 
@@ -19,67 +64,64 @@ void inputAndUpdatePlayer( Player *player, float delta, int lines, int columns, 
             player->vel.x = -player->walkingSpeed;
         } else if ( IsKeyDown( KEY_RIGHT ) ) {
             player->vel.x = player->walkingSpeed;
-        } else {
-            //player->vel.x = 0;
         }
 
         if ( IsKeyDown( KEY_UP ) ) {
             player->vel.y = -player->walkingSpeed;
         } else if ( IsKeyDown( KEY_DOWN ) ) {
             player->vel.y = player->walkingSpeed;
-        } else {
-            //player->vel.y = 0;
         }
 
         player->pos.x += player->vel.x * delta;
         player->pos.y += player->vel.y * delta;
 
+        // grid limits resolution
         if ( player->pos.x + player->radius < 0 ) {
-            player->pos.x = columns * gridCellSize + gridCellSize / 2;
-        } else if ( player->pos.x - player->radius > columns * gridCellSize ) {
-            player->pos.x = -gridCellSize / 2;
+            player->pos.x = GRID_COLUMNS * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+        } else if ( player->pos.x - player->radius > GRID_COLUMNS * GRID_CELL_SIZE ) {
+            player->pos.x = -GRID_CELL_SIZE / 2;
         }
 
         if ( player->pos.y + player->radius < 0 ) {
-            player->pos.y = lines * gridCellSize + gridCellSize / 2;
-        } else if ( player->pos.y - player->radius > lines * gridCellSize ) {
-            player->pos.y = -gridCellSize / 2;
+            player->pos.y = GRID_LINES * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+        } else if ( player->pos.y - player->radius > GRID_LINES * GRID_CELL_SIZE ) {
+            player->pos.y = -GRID_CELL_SIZE / 2;
         }
 
-        Vector2 p = getPlayerLineAndColumn( player, gridCellSize );
+        // obstacle collision resolution
+        Vector2 p = getLineAndColumn( player->pos );
         int x = (int) p.x;
         int y = (int) p.y;
-        int xL = (int) ( ( player->pos.x - player->radius + 1 ) / gridCellSize );
-        int xR = (int) ( ( player->pos.x + player->radius - 1 ) / gridCellSize );
-        int yU = (int) ( ( player->pos.y - player->radius + 1 ) / gridCellSize );
-        int yD = (int) ( ( player->pos.y + player->radius - 1 ) / gridCellSize );
+        int xL = (int) ( ( player->pos.x - player->radius + 1 ) / GRID_CELL_SIZE );
+        int xR = (int) ( ( player->pos.x + player->radius - 1 ) / GRID_CELL_SIZE );
+        int yU = (int) ( ( player->pos.y - player->radius + 1 ) / GRID_CELL_SIZE );
+        int yD = (int) ( ( player->pos.y + player->radius - 1 ) / GRID_CELL_SIZE );
 
-        // collision
-        if ( y >= 0 && y < lines ) {
-            if ( xL >= 0 && xL < columns ) {
-                if ( grid[y*columns+xL] < P || grid[y*columns+xL] == M ) {
-                    player->pos.x = (xL+1) * gridCellSize + player->radius;
+        if ( y >= 0 && y < GRID_LINES ) {
+            if ( xL >= 0 && xL < GRID_COLUMNS ) {
+                if ( grid[y*GRID_COLUMNS+xL] < P || grid[y*GRID_COLUMNS+xL] == M ) {
+                    player->pos.x = (xL+1) * GRID_CELL_SIZE + player->radius;
                     player->vel.x = 0;
                 }
             }
-            if ( xR >= 0 && xR < columns ) {
-                if ( grid[y*columns+xR] < P || grid[y*columns+xR] == M ) {
-                    player->pos.x = xR * gridCellSize - player->radius;
+            if ( xR >= 0 && xR < GRID_COLUMNS ) {
+                if ( grid[y*GRID_COLUMNS+xR] < P || grid[y*GRID_COLUMNS+xR] == M ) {
+                    player->pos.x = xR * GRID_CELL_SIZE - player->radius;
                     player->vel.x = 0;
                 }
             }
         }
 
-        if ( x >= 0 && x < columns ) {
-            if ( yU >= 0 && yU < lines ) {
-                if ( grid[yU*columns+x] < P || grid[yU*columns+x] == M ) {
-                    player->pos.y = (yU+1) * gridCellSize + player->radius;
+        if ( x >= 0 && x < GRID_COLUMNS ) {
+            if ( yU >= 0 && yU < GRID_LINES ) {
+                if ( grid[yU*GRID_COLUMNS+x] < P || grid[yU*GRID_COLUMNS+x] == M ) {
+                    player->pos.y = (yU+1) * GRID_CELL_SIZE + player->radius;
                     player->vel.y = 0;
                 }
             }
-            if ( yD >= 0 && yD < lines ) {
-                if ( grid[yD*columns+x] < P || grid[yD*columns+x] == M ) {
-                    player->pos.y = yD * gridCellSize - player->radius;
+            if ( yD >= 0 && yD < GRID_LINES ) {
+                if ( grid[yD*GRID_COLUMNS+x] < P || grid[yD*GRID_COLUMNS+x] == M ) {
+                    player->pos.y = yD * GRID_CELL_SIZE - player->radius;
                     player->vel.y = 0;
                 }
             }
@@ -98,13 +140,13 @@ void inputAndUpdatePlayer( Player *player, float delta, int lines, int columns, 
         }
 
         // coins
-        if ( x >= 0 && x < columns && y >= 0 && y < lines ) {
-            if ( grid[y*columns+x] == W ) {
-                grid[y*columns+x] = P;
+        if ( x >= 0 && x < GRID_COLUMNS && y >= 0 && y < GRID_LINES ) {
+            if ( grid[y*GRID_COLUMNS+x] == W ) {
+                grid[y*GRID_COLUMNS+x] = P;
                 player->points += 10;
                 gw->remainingCoins--;
-            } else if ( grid[y*columns+x] == Q ) {
-                grid[y*columns+x] = P;
+            } else if ( grid[y*GRID_COLUMNS+x] == Q ) {
+                grid[y*GRID_COLUMNS+x] = P;
                 player->points += 50;
                 gw->remainingCoins--;
                 startHuntingBaddies( gw );
@@ -125,11 +167,11 @@ void inputAndUpdatePlayer( Player *player, float delta, int lines, int columns, 
 
 }
 
-void drawPlayer( Player *player, int lines, int columns, int gridCellSize ) {
+void drawPlayer( Player *player ) {
 
     float drawRadius = player->radius * 1.5;
-    int x = columns * gridCellSize - gridCellSize - 10;
-    int y = lines * gridCellSize + gridCellSize;
+    int x = GRID_COLUMNS * GRID_CELL_SIZE - GRID_CELL_SIZE - 10;
+    int y = GRID_LINES * GRID_CELL_SIZE + GRID_CELL_SIZE;
     int m = 0;
 
     if ( player->state == ALIVE ) {
@@ -166,28 +208,17 @@ void drawPlayer( Player *player, int lines, int columns, int gridCellSize ) {
         }
     }
 
-    DrawText( TextFormat( "%d", player->points ), 20, lines * gridCellSize + 5, 40, WHITE );
+    DrawText( TextFormat( "%d", player->points ), 20, GRID_LINES * GRID_CELL_SIZE + 5, 40, WHITE );
 
     for ( int i = 0; i < player->lives - 1; i++ ) {
         DrawCircleSector( (Vector2){ x - ( drawRadius * 2 + 10 ) * i, y }, drawRadius, -150, 150, 30, player->color );
     }
 
-    /*Vector2 p = getPlayerLineAndColumn( player, gridCellSize );
-    const char *t = TextFormat( "%d, %d", (int) p.x, (int) p.y );
-    DrawText( t, player->pos.x, player->pos.y, 20, BLACK );*/
-
 }
 
-Vector2 getPlayerLineAndColumn( Player *player, int gridCellSize ) {
+Vector2 getPlayerLineAndColumn( Player *player ) {
     return (Vector2) {
-        player->pos.x / gridCellSize,
-        player->pos.y / gridCellSize,
-    };
-}
-
-Vector2 getLineAndColumnFromPos( Vector2 pos, int gridCellSize ) {
-    return (Vector2) {
-        pos.x / gridCellSize,
-        pos.y / gridCellSize,
+        player->pos.x / GRID_CELL_SIZE,
+        player->pos.y / GRID_CELL_SIZE,
     };
 }

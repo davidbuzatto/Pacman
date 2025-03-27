@@ -12,24 +12,13 @@
 #include "Types.h"
 #include "GameWorld.h"
 #include "ResourceManager.h"
+#include "utils.h"
 
 #include "raylib/raylib.h"
 //#include "raylib/raymath.h"
-//#define RAYGUI_IMPLEMENTATION    // to use raygui, comment these three lines.
-//#include "raylib/raygui.h"       // other compilation units must only include
-//#undef RAYGUI_IMPLEMENTATION     // raygui.h
-
-const int SW = GRID_CELL_SIZE / 3;
-
-const int PLAYER_LINE = 23;
-const int PLAYER_COLUMN = 14;
-
-const int BADDIE_LINE = 14;
-const int BADDIE_COLUMN = 14;
-
-const float TIME_TO_RETURN_TO_HUNT = 5;
-const float TIME_TO_START_BLINKING = 3;
-const float TIME_TO_BLINK = 0.2;
+//#define RAYGUI_IMPLEMENTATION
+//#include "raylib/raygui.h"
+//#undef RAYGUI_IMPLEMENTATION
 
 const bool DEBUG_GRID = false;
 const bool IMMORTAL = false;
@@ -69,40 +58,6 @@ const CellType templateGrid[] = {
     C, H, H, H, H, H, H, H, H, H, H, H, H, H,   H, H, H, H, H, H, H, H, H, H, H, H, H, D
 };
 
-/*const CellType templateGrid[] = {
-    A, H, H, H, H, H, H, H, H, H, H, H, H, B,   A, H, H, H, H, H, H, H, H, H, H, H, H, B,
-    V, P, P, P, P, P, P, P, P, P, P, P, P, V,   V, P, P, P, P, P, P, P, P, P, P, P, P, V,
-    V, P, A, H, H, B, P, A, H, H, H, B, P, V,   V, P, A, H, H, H, B, P, A, H, H, B, P, V,
-    V, P, V, O, O, V, P, V, O, O, O, V, P, V,   V, P, V, O, O, O, V, P, V, O, O, V, P, V,
-    V, P, C, H, H, D, P, C, H, H, H, D, P, C,   D, P, C, H, H, H, D, P, C, H, H, D, P, V,
-    V, P, P, P, P, P, P, P, P, P, P, P, P, P,   P, P, P, P, P, P, P, P, P, P, P, P, P, V,
-    V, P, A, H, H, B, P, A, B, P, A, H, H, H,   H, H, H, B, P, A, B, P, A, H, H, B, P, V,
-    V, P, C, H, H, D, P, V, V, P, C, H, H, B,   A, H, H, D, P, V, V, P, C, H, H, D, P, V,
-    V, P, P, P, P, P, P, V, V, P, P, P, P, V,   V, P, P, P, P, V, V, P, P, P, P, P, P, V,
-    C, H, H, H, H, B, P, V, C, H, H, B, P, V,   V, P, A, H, H, D, V, P, A, H, H, H, H, D,
-    O, O, O, O, O, V, P, V, A, H, H, D, P, C,   D, P, C, H, H, B, V, P, V, O, O, O, O, O,
-    O, O, O, O, O, V, P, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, P, V, O, O, O, O, O,
-    O, O, O, O, O, V, P, V, V, P, A, H, H, M,   M, H, H, B, P, V, V, P, V, O, O, O, O, O,
-    H, H, H, H, H, D, P, C, D, P, V, G, G, G,   G, G, G, V, P, C, D, P, C, H, H, H, H, H,
-    P, P, P, P, P, P, P, P, P, P, V, G, G, G,   G, G, G, V, P, P, P, P, P, P, P, P, P, P,
-    H, H, H, H, H, B, P, A, B, P, V, G, G, G,   G, G, G, V, P, A, B, P, A, H, H, H, H, H,
-    O, O, O, O, O, V, P, V, V, P, C, H, H, H,   H, H, H, D, P, V, V, P, V, O, O, O, O, O,
-    O, O, O, O, O, V, P, V, V, P, P, P, P, P,   P, P, P, P, P, V, V, P, V, O, O, O, O, O,
-    O, O, O, O, O, V, P, V, V, P, A, H, H, H,   H, H, H, B, P, V, V, P, V, O, O, O, O, O,
-    A, H, H, H, H, D, P, C, D, P, C, H, H, B,   A, H, H, D, P, C, D, P, C, H, H, H, H, B,
-    V, P, P, P, P, P, P, P, P, P, P, P, P, V,   V, P, P, P, P, P, P, P, P, P, P, P, P, V,
-    V, P, A, H, H, B, P, A, H, H, H, B, P, V,   V, P, A, H, H, H, B, P, A, H, H, B, P, V,
-    V, P, C, H, B, V, P, C, H, H, H, D, P, C,   D, P, C, H, H, H, D, P, V, A, H, D, P, V,
-    V, P, P, P, V, V, P, P, P, P, P, P, P, P,   P, W, P, P, P, P, P, P, V, V, P, P, P, V,
-    C, H, B, P, V, V, P, A, B, P, A, H, H, H,   H, H, H, B, P, A, B, P, V, V, P, A, H, D,
-    A, H, D, P, C, D, P, V, V, P, C, H, H, B,   A, H, H, D, P, V, V, P, C, D, P, C, H, B,
-    V, P, P, P, P, P, P, V, V, P, P, P, P, V,   V, P, P, P, P, V, V, P, P, P, P, P, P, V,
-    V, P, A, H, H, H, H, D, C, H, H, B, P, V,   V, P, A, H, H, D, C, H, H, H, H, B, P, V,
-    V, P, C, H, H, H, H, H, H, H, H, D, P, C,   D, P, C, H, H, H, H, H, H, H, H, D, P, V,
-    V, P, P, P, P, P, P, P, P, P, P, P, P, P,   P, P, P, P, P, P, P, P, P, P, P, P, P, V,
-    C, H, H, H, H, H, H, H, H, H, H, H, H, H,   H, H, H, H, H, H, H, H, H, H, H, H, H, D
-};*/
-
 /**
  * @brief Creates a dinamically allocated GameWorld struct instance.
  */
@@ -112,228 +67,43 @@ GameWorld* createGameWorld( void ) {
     
     *gw = (GameWorld) {
         .grid = {0},
-        .player = {
-            .pos = {
-                .x = PLAYER_COLUMN * GRID_CELL_SIZE,
-                .y = PLAYER_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-            },
-            .vel = {
-                .x = 0,
-                .y = 0
-            },
-            .walkingSpeed = 250,
-            .radius = GRID_CELL_SIZE / 2,
-            .color = { 255, 239, 0, 255 },
-            .lives = 5,
-            .points = 0,
-            .currentFrame = 0,
-            .maxFrames = 3,
-            .timeToNextFrame = 0.05,
-            .frameTimeCounter = 0,
-            .direction = DIRECTION_RIGHT,
-            .state = ALIVE,
-            .dyingCurrentFrame = 0,
-            .dyingMaxFrames = 11,
-            .dyingTimeToNextFrame = 0.05,
-            .dyingFrameTimeCounter = 0
-        },
+        .player = createNewPlayer(),
         .baddies = {
-            (Baddie) {
-                .startPos = {
-                    .x = BADDIE_COLUMN * GRID_CELL_SIZE,
-                    .y = ( BADDIE_LINE - 3 ) * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-                },
-                .pos = {
-                    .x = BADDIE_COLUMN * GRID_CELL_SIZE,
-                    .y = ( BADDIE_LINE - 3 ) * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-                },
-                .vel = {
-                    .x = 0,
-                    .y = 0
-                },
-                .walkingSpeed = 200,
-                .radius = GRID_CELL_SIZE / 2,
-                .spriteMap = rm.spriteMap,
-                .ySource = 130,
-                .color = { 255, 21, 0, 255 },
-                .vulnerableColor = { 31, 44, 255, 255 },
-                .returningToHuntColor = RAYWHITE,
-                .currentFrame = 0,
-                .maxFrames = 2,
-                .timeToNextFrame = 0.1,
-                .frameTimeCounter = 0,
-                .direction = DIRECTION_RIGHT,
-                .hunting = true,
-                .timeToReturnToHunt = TIME_TO_RETURN_TO_HUNT,
-                .returnToHuntCounter = 0,
-                .timeToStartBlinking = TIME_TO_START_BLINKING,
-                .timeToBlink = TIME_TO_BLINK,
-                .blinkCounter = 0,
-                .blink = false,
-                .path = {
-                    { 11, 14 }, { 11, 18 }, { 14, 18 }, { 14, 21 }, { 5, 21 }, { 5, 1 }
-                },
-                .pathSize = 6,
-                .currentPathPos = 0,
-                .state = ALIVE,
-                .showCapturePoints = false,
-                .capturePointsPos = { 0 },
-                .capturePoints = 0,
-                .timeToShowPoints = 2,
-                .showPointsCounter = 0
-            },
-            (Baddie) {
-                .startPos = {
-                    .x = ( BADDIE_COLUMN - 2 ) * GRID_CELL_SIZE,
-                    .y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-                },
-                .pos = {
-                    .x = ( BADDIE_COLUMN - 2 ) * GRID_CELL_SIZE,
-                    .y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-                },
-                .vel = {
-                    .x = 0,
-                    .y = 0
-                },
-                .walkingSpeed = 200,
-                .radius = GRID_CELL_SIZE / 2,
-                .spriteMap = rm.spriteMap,
-                .ySource = 194,
-                .color = { 0, 232, 255, 255 },
-                .vulnerableColor = { 31, 44, 255, 255 },
-                .returningToHuntColor = RAYWHITE,
-                .currentFrame = 0,
-                .maxFrames = 2,
-                .timeToNextFrame = 0.1,
-                .frameTimeCounter = 0,
-                .direction = DIRECTION_RIGHT,
-                .hunting = true,
-                .timeToReturnToHunt = TIME_TO_RETURN_TO_HUNT,
-                .returnToHuntCounter = 0,
-                .timeToStartBlinking = TIME_TO_START_BLINKING,
-                .timeToBlink = TIME_TO_BLINK,
-                .blinkCounter = 0,
-                .blink = false,
-                .path = {
-                    { 14, 13 }, { 11, 13 }, { 11, 9 }, { 20, 9 }, { 20, 1 }, { 23, 1 }
-                },
-                .pathSize = 6,
-                .currentPathPos = 0,
-                .state = ALIVE,
-                .showCapturePoints = false,
-                .capturePointsPos = { 0 },
-                .capturePoints = 0,
-                .timeToShowPoints = 2,
-                .showPointsCounter = 0
-            },
-            (Baddie) {
-                .startPos = {
-                    .x = BADDIE_COLUMN * GRID_CELL_SIZE,
-                    .y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-                },
-                .pos = {
-                    .x = BADDIE_COLUMN * GRID_CELL_SIZE,
-                    .y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-                },
-                .vel = {
-                    .x = 0,
-                    .y = 0
-                },
-                .walkingSpeed = 200,
-                .radius = GRID_CELL_SIZE / 2,
-                .spriteMap = rm.spriteMap,
-                .ySource = 162,
-                .color = { 255, 196, 253, 255 },
-                .vulnerableColor = { 31, 44, 255, 255 },
-                .returningToHuntColor = RAYWHITE,
-                .currentFrame = 0,
-                .maxFrames = 2,
-                .timeToNextFrame = 0.1,
-                .frameTimeCounter = 0,
-                .direction = DIRECTION_RIGHT,
-                .hunting = true,
-                .timeToReturnToHunt = TIME_TO_RETURN_TO_HUNT,
-                .returnToHuntCounter = 0,
-                .timeToStartBlinking = TIME_TO_START_BLINKING,
-                .timeToBlink = TIME_TO_BLINK,
-                .blinkCounter = 0,
-                .blink = false,
-                .path = {
-                    { 14, 14 }, { 11, 14 }, { 11, 18 }, { 20, 18 }, { 20, 21 }, { 26, 21 }
-                },
-                .pathSize = 6,
-                .currentPathPos = 0,
-                .state = ALIVE,
-                .showCapturePoints = false,
-                .capturePointsPos = { 0 },
-                .capturePoints = 0,
-                .timeToShowPoints = 2,
-                .showPointsCounter = 0
-            },
-            (Baddie) {
-                .startPos = {
-                    .x = ( BADDIE_COLUMN + 2 ) * GRID_CELL_SIZE,
-                    .y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-                },
-                .pos = {
-                    .x = ( BADDIE_COLUMN + 2 ) * GRID_CELL_SIZE,
-                    .y = BADDIE_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-                },
-                .vel = {
-                    .x = 0,
-                    .y = 0
-                },
-                .walkingSpeed = 200,
-                .radius = GRID_CELL_SIZE / 2,
-                .spriteMap = rm.spriteMap,
-                .ySource = 226,
-                .color = { 255, 183, 80, 255 },
-                .vulnerableColor = { 31, 44, 255, 255 },
-                .returningToHuntColor = RAYWHITE,
-                .currentFrame = 0,
-                .maxFrames = 2,
-                .timeToNextFrame = 0.1,
-                .frameTimeCounter = 0,
-                .direction = DIRECTION_RIGHT,
-                .hunting = true,
-                .timeToReturnToHunt = TIME_TO_RETURN_TO_HUNT,
-                .returnToHuntCounter = 0,
-                .timeToStartBlinking = TIME_TO_START_BLINKING,
-                .timeToBlink = TIME_TO_BLINK,
-                .blinkCounter = 0,
-                .blink = false,
-                .path = {
-                    { 14, 11 }, { 14, 13 }, { 11, 13 }, { 11, 9 }, { 20, 9 }, { 20, 12 }
-                },
-                .pathSize = 6,
-                .currentPathPos = 0,
-                .state = ALIVE,
-                .showCapturePoints = false,
-                .capturePointsPos = { 0 },
-                .capturePoints = 0,
-                .timeToShowPoints = 2,
-                .showPointsCounter = 0
-            },
+            createNewBaddie( 11, 14, 130, (Color){ 255, 21, 0, 255 } ),
+            createNewBaddie( 14, 12, 194, (Color){ 0, 232, 255, 255 } ),
+            createNewBaddie( 14, 14, 162, (Color){ 255, 196, 253, 255 } ),
+            createNewBaddie( 14, 16, 226, (Color){ 255, 183, 80, 255 } )
         },
         .boundaryColor = { 35, 44, 218, 255 },
         .doorColor = { 255, 171, 255, 255 },
         .coinColor = { 255, 192, 182, 255 },
+
+        .smallCoinRadius = 0,
+        .bigCoinRadius = 0,
         .timeToBlinkBigCoin = 0.2,
         .blinkBigCoinCounter = 0,
         .showBigCoin = true,
-        .state = START,
+
         .baddieCaptureBasePoints = 200,
         .baddieCaptureCurrentPoints = 200,
-        .remainingCoins = 0
+        .remainingCoins = 0,
+
+        .marked = { 0 },
+        .edgeTo = { 0 },
+        .queue = { 0 },
+
+        .state = START
+
     };
 
-    copyTemplateGrid( gw, templateGrid );
     gw->smallCoinRadius = gw->player.radius * 0.3f;
     gw->bigCoinRadius = gw->player.radius * 0.8f;
 
+    copyTemplateGrid( gw, templateGrid );
+    
     for ( int i = 0; i < 4; i++ ) {
         if ( i < BADDIES_TO_RUN ) {
-            generateNewRandomPath( &gw->baddies[i], GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+            generateNewRandomPath( &gw->baddies[i], gw );
         } else {
             break;
         }
@@ -355,6 +125,22 @@ void destroyGameWorld( GameWorld *gw ) {
  */
 void inputAndUpdateGameWorld( GameWorld *gw, float delta ) {
 
+    if ( IsKeyPressed( KEY_ENTER ) ) {
+        if ( gw->state == START || gw->state == PAUSED || gw->state == WON || gw->player.state == DEAD ) {
+            bool gameOver = gw->player.lives == 0;
+            if ( gw->state == WON || gw->player.state == DEAD ) {
+                resetGame( gw, gw->state == WON || gameOver );
+            }
+            if ( gw->state == WON || gameOver ) {
+                gw->state = START;
+            } else {
+                gw->state = RUNNING;
+            }
+        } else if ( gw->state == RUNNING ) {
+            gw->state = PAUSED;
+        }
+    }
+    
     if ( gw->remainingCoins == 0 ) {
         gw->state = WON;
     }
@@ -369,33 +155,17 @@ void inputAndUpdateGameWorld( GameWorld *gw, float delta ) {
 
         for ( int i = 0; i < 4; i++ ) {
             if ( i < BADDIES_TO_RUN ) {
-                updateBaddie( &gw->baddies[i], delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+                updateBaddie( &gw->baddies[i], delta, gw );
             } else {
                 break;
             }
         }
 
-        inputAndUpdatePlayer( &gw->player, delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
-        resolvePlayerBaddieCollision( gw, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
+        inputAndUpdatePlayer( &gw->player, delta, gw );
+        resolvePlayerBaddieCollision( gw );
 
     } else if ( gw->state == PLAYER_DYING ) {
-        inputAndUpdatePlayer( &gw->player, delta, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
-    }
-
-    if ( IsKeyPressed( KEY_ENTER ) ) {
-        if ( gw->state == START || gw->state == PAUSED || gw->state == WON || gw->player.state == DEAD ) {
-            bool gameOver = gw->player.lives == 0;
-            if ( gw->state == WON || gw->player.state == DEAD ) {
-                reset( gw, gw->state == WON || gameOver );
-            }
-            if ( gw->state == WON || gameOver ) {
-                gw->state = START;
-            } else {
-                gw->state = RUNNING;
-            }
-        } else if ( gw->state == RUNNING ) {
-            gw->state = PAUSED;
-        }
+        inputAndUpdatePlayer( &gw->player, delta, gw );
     }
 
 }
@@ -408,84 +178,18 @@ void drawGameWorld( GameWorld *gw ) {
     BeginDrawing();
     ClearBackground( BLACK );
 
-    for ( int i = 0; i < GRID_LINES; i++ ) {
-        for ( int j = 0; j < GRID_COLUMNS; j++ ) {
-            int x = j * GRID_CELL_SIZE;
-            int y = i * GRID_CELL_SIZE;
-            switch ( gw->grid[i*GRID_COLUMNS+j] ) {
-                case O:
-                    //DrawRectangle( x, y, GRID_CELL_SIZE, GRID_CELL_SIZE, BLACK );
-                    break;
-                case M:
-                    DrawRectangle( x, y + GRID_CELL_SIZE / 2 - SW / 2, GRID_CELL_SIZE, SW, gw->doorColor );
-                    break;
-                case H:
-                    DrawRectangle( x, y + GRID_CELL_SIZE / 2 - SW / 2, GRID_CELL_SIZE, SW, gw->boundaryColor );
-                    break;
-                case V:
-                    DrawRectangle( x + GRID_CELL_SIZE / 2 - SW / 2, y, SW, GRID_CELL_SIZE, gw->boundaryColor );
-                    break;
-                case A:
-                    DrawRectangle( x + SW * 2, y + SW, SW, SW, gw->boundaryColor );
-                    DrawRectangle( x + SW, y + SW * 2, SW, SW, gw->boundaryColor );
-                    break;
-                case B:
-                    DrawRectangle( x, y + SW, SW, SW, gw->boundaryColor );
-                    DrawRectangle( x + SW, y + SW * 2, SW, SW, gw->boundaryColor );
-                    break;
-                case C:
-                    DrawRectangle( x + SW * 2, y + SW, SW, SW, gw->boundaryColor );
-                    DrawRectangle( x + SW, y, SW, SW, gw->boundaryColor );
-                    break;
-                case D:
-                    DrawRectangle( x, y + SW, SW, SW, gw->boundaryColor );
-                    DrawRectangle( x + SW, y, SW, SW, gw->boundaryColor );
-                    break;
-                case G:
-                    //DrawRectangle( x, y, GRID_CELL_SIZE, GRID_CELL_SIZE, BLACK );
-                    break;
-                case P:
-                    //DrawRectangle( x, y, GRID_CELL_SIZE, GRID_CELL_SIZE, BLACK );
-                    break;
-                case W:
-                    DrawCircle( x + GRID_CELL_SIZE / 2, y + GRID_CELL_SIZE / 2, gw->smallCoinRadius, gw->coinColor );
-                    break;
-                case Q:
-                    if ( gw->showBigCoin ) {
-                        DrawCircle( x + GRID_CELL_SIZE / 2, y + GRID_CELL_SIZE / 2, gw->bigCoinRadius, gw->coinColor );
-                    }
-                    break;
-            }
-        }
-    }
+    drawGrid( gw );
 
     for ( int i = 0; i < 4; i++ ) {
         if ( i < BADDIES_TO_RUN ) {
-            drawBaddie( &gw->baddies[i], GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
+            drawBaddie( &gw->baddies[i] );
         } else {
             break;
         }
     }
 
-    drawPlayer( &gw->player, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE );
-
-    if (  gw->state == WON ) {
-        const char* text = "CONGRATULATIONS!";
-        DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.7f ) );
-        DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 60 ) / 2, GetScreenHeight() / 2 - 80, 60, GREEN );
-    } else if ( gw->state == START || gw->player.state == DEAD ) {
-        if ( gw->player.lives == 0 ) {
-            const char* text = "GAME OVER!";
-            DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.7f ) );
-            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 60 ) / 2, GetScreenHeight() / 2 - 80, 60, RED );
-        } else {
-            const char* text = "READY!";
-            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
-        }
-    } else if ( gw->state == PAUSED ) {
-        const char* text = "PAUSED!";
-        DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
-    }
+    drawPlayer( &gw->player );
+    drawMessages( gw ) ;
 
     if ( DEBUG_GRID ) {
 
@@ -504,9 +208,83 @@ void drawGameWorld( GameWorld *gw ) {
         
     }
 
-    //DrawText( TextFormat( "%d", gw->remainingCoins ), GetScreenWidth() / 2, GetScreenHeight() - 50, 20, WHITE );
-
     EndDrawing();
+
+}
+
+void drawGrid( GameWorld *gw ) {
+
+    int squareWidth = GRID_CELL_SIZE / 3;
+
+    for ( int i = 0; i < GRID_LINES; i++ ) {
+        for ( int j = 0; j < GRID_COLUMNS; j++ ) {
+            int x = j * GRID_CELL_SIZE;
+            int y = i * GRID_CELL_SIZE;
+            switch ( gw->grid[i*GRID_COLUMNS+j] ) {
+                case O:
+                    break;
+                case H:
+                    DrawRectangle( x, y + GRID_CELL_SIZE / 2 - squareWidth / 2, GRID_CELL_SIZE, squareWidth, gw->boundaryColor );
+                    break;
+                case V:
+                    DrawRectangle( x + GRID_CELL_SIZE / 2 - squareWidth / 2, y, squareWidth, GRID_CELL_SIZE, gw->boundaryColor );
+                    break;
+                case A:
+                    DrawRectangle( x + squareWidth * 2, y + squareWidth, squareWidth, squareWidth, gw->boundaryColor );
+                    DrawRectangle( x + squareWidth, y + squareWidth * 2, squareWidth, squareWidth, gw->boundaryColor );
+                    break;
+                case B:
+                    DrawRectangle( x, y + squareWidth, squareWidth, squareWidth, gw->boundaryColor );
+                    DrawRectangle( x + squareWidth, y + squareWidth * 2, squareWidth, squareWidth, gw->boundaryColor );
+                    break;
+                case C:
+                    DrawRectangle( x + squareWidth * 2, y + squareWidth, squareWidth, squareWidth, gw->boundaryColor );
+                    DrawRectangle( x + squareWidth, y, squareWidth, squareWidth, gw->boundaryColor );
+                    break;
+                case D:
+                    DrawRectangle( x, y + squareWidth, squareWidth, squareWidth, gw->boundaryColor );
+                    DrawRectangle( x + squareWidth, y, squareWidth, squareWidth, gw->boundaryColor );
+                    break;
+                case G:
+                    break;
+                case M:
+                    DrawRectangle( x, y + GRID_CELL_SIZE / 2 - squareWidth / 2, GRID_CELL_SIZE, squareWidth, gw->doorColor );
+                    break;
+                case P:
+                    break;
+                case W:
+                    DrawCircle( x + GRID_CELL_SIZE / 2, y + GRID_CELL_SIZE / 2, gw->smallCoinRadius, gw->coinColor );
+                    break;
+                case Q:
+                    if ( gw->showBigCoin ) {
+                        DrawCircle( x + GRID_CELL_SIZE / 2, y + GRID_CELL_SIZE / 2, gw->bigCoinRadius, gw->coinColor );
+                    }
+                    break;
+            }
+        }
+    }
+
+}
+
+void drawMessages( GameWorld *gw ) {
+
+    if (  gw->state == WON ) {
+        const char* text = "CONGRATULATIONS!";
+        DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.7f ) );
+        DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 60 ) / 2, GetScreenHeight() / 2 - 80, 60, GREEN );
+    } else if ( gw->state == START || gw->player.state == DEAD ) {
+        if ( gw->player.lives == 0 ) {
+            const char* text = "GAME OVER!";
+            DrawRectangle( 0, 0, GetScreenWidth(), GetScreenHeight(), Fade( BLACK, 0.7f ) );
+            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 60 ) / 2, GetScreenHeight() / 2 - 80, 60, RED );
+        } else {
+            const char* text = "READY!";
+            DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
+        }
+    } else if ( gw->state == PAUSED ) {
+        const char* text = "PAUSED!";
+        DrawText( text, GetScreenWidth() / 2 - MeasureText( text, 40 ) / 2, GetScreenHeight() / 2 + 2, 40, gw->player.color );
+    }
 
 }
 
@@ -539,7 +317,7 @@ void startHuntingBaddies( GameWorld *gw ) {
 
 }
 
-void resolvePlayerBaddieCollision( GameWorld *gw, int lines, int columns, int gridCellSize ) {
+void resolvePlayerBaddieCollision( GameWorld *gw ) {
 
     Player *player = &gw->player;
     
@@ -564,9 +342,9 @@ void resolvePlayerBaddieCollision( GameWorld *gw, int lines, int columns, int gr
                     b->vel.x = 0;
                     b->vel.y = 0;
                     player->points += gw->baddieCaptureCurrentPoints;
-                    showCapturePoints( b, getLineAndColumnFromPos( b->pos, gridCellSize ), gw->baddieCaptureCurrentPoints );
+                    showCapturePoints( b, getLineAndColumn( b->pos ), gw->baddieCaptureCurrentPoints );
                     gw->baddieCaptureCurrentPoints *= 2;
-                    generateNewPath( b, 14, GetRandomValue( 13, 14 ), lines, columns, gridCellSize, gw );
+                    generateNewPath( b, 14, GetRandomValue( 13, 14 ), gw );
                 }
 
             }
@@ -579,13 +357,10 @@ void resolvePlayerBaddieCollision( GameWorld *gw, int lines, int columns, int gr
 
 }
 
-void reset( GameWorld *gw, bool gameOver ) {
+void resetGame( GameWorld *gw, bool gameOver ) {
 
     Player *player = &gw->player;
-    player->pos = (Vector2) {
-        .x = PLAYER_COLUMN * GRID_CELL_SIZE,
-        .y = PLAYER_LINE * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
-    };
+    player->pos = player->startPos;
     player->vel.x = 0;
     player->vel.y = 0;
     player->direction = DIRECTION_RIGHT;
@@ -599,7 +374,7 @@ void reset( GameWorld *gw, bool gameOver ) {
             b->state = ALIVE;
             b->direction = DIRECTION_RIGHT;
             b->pos = b->startPos;
-            generateNewRandomPath( b, GRID_LINES, GRID_COLUMNS, GRID_CELL_SIZE, gw );
+            generateNewRandomPath( b, gw );
         } else {
             break;
         }

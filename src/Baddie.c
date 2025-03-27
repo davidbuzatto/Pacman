@@ -1,11 +1,70 @@
+#include <string.h>
+
 #include "Types.h"
 #include "Baddie.h"
+#include "ResourceManager.h"
+#include "utils.h"
+
 #include "raylib/raylib.h"
 
-const int xStarts[] = { 2, 66, 130, 194 };
+const int SPRITE_MAP_START_X[] = { 2, 66, 130, 194 };
 
-void updateBaddie( Baddie *baddie, float delta, int lines, int columns, int gridCellSize, GameWorld *gw ) {
+Baddie createNewBaddie( int line, int column, int ySource, Color color ) {
 
+    return (Baddie) {
+
+        .startPos = {
+            .x = column * GRID_CELL_SIZE,
+            .y = line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
+        },
+        .pos = {
+            .x = column * GRID_CELL_SIZE,
+            .y = line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2
+        },
+        .vel = {
+            .x = 0,
+            .y = 0
+        },
+        .walkingSpeed = 200,
+        .radius = GRID_CELL_SIZE / 2,
+        .spriteMap = rm.spriteMap,
+        .ySource = ySource,
+        .color = color,
+
+        .currentFrame = 0,
+        .maxFrames = 2,
+        .timeToNextFrame = 0.1,
+        .frameTimeCounter = 0,
+
+        .hunting = true,
+        .timeToReturnToHunt = 5,
+        .returnToHuntCounter = 0,
+
+        .blink = false,
+        .timeToStartBlinking = 3,
+        .timeToBlink = 0.2,
+        .blinkCounter = 0,
+
+        .path = { 0 },
+        .pathSize = 0,
+        .currentPathPos = 1,
+
+        .showCapturePoints = false,
+        .capturePointsPos = { 0 },
+        .capturePoints = 0,
+        .timeToShowPoints = 2,
+        .showPointsCounter = 0,
+
+        .direction = DIRECTION_RIGHT,
+        .state = ALIVE
+        
+    };
+
+}
+
+void updateBaddie( Baddie *baddie, float delta, GameWorld *gw ) {
+
+    // counters and graphical state
     baddie->frameTimeCounter += delta;
     if ( baddie->frameTimeCounter > baddie->timeToNextFrame ) {
         baddie->frameTimeCounter = 0;
@@ -29,25 +88,27 @@ void updateBaddie( Baddie *baddie, float delta, int lines, int columns, int grid
         }
     }
 
+    // path generation
     if ( baddie->currentPathPos == baddie->pathSize ) {
         baddie->currentPathPos = -1;
         baddie->vel.x = 0;
         baddie->vel.y = 0;
-        generateNewRandomPath( baddie, lines, columns, gridCellSize, gw );
+        generateNewRandomPath( baddie, gw );
         if ( baddie->state == RETURNING_HOME ) {
             baddie->hunting = true;
-            baddie->state = ALIVE;
             baddie->blink = false;
+            baddie->state = ALIVE;
         }
     }
 
+    // direction and velocity calculation
     int destX = -1;
     int destY = -1;
 
     if ( baddie->currentPathPos != -1 ) {
 
-        destX = baddie->path[baddie->currentPathPos].column * gridCellSize + gridCellSize / 2;
-        destY = baddie->path[baddie->currentPathPos].line * gridCellSize + gridCellSize / 2;
+        destX = baddie->path[baddie->currentPathPos].column * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
+        destY = baddie->path[baddie->currentPathPos].line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
 
         if ( destX < baddie->pos.x ) {
             baddie->vel.x = -baddie->walkingSpeed;
@@ -74,6 +135,7 @@ void updateBaddie( Baddie *baddie, float delta, int lines, int columns, int grid
     baddie->pos.x += baddie->vel.x * delta;
     baddie->pos.y += baddie->vel.y * delta;
 
+    // path walking
     if ( destX != -1 || destY != -1 ) {
         switch ( baddie->direction ) {
             case DIRECTION_LEFT:
@@ -104,6 +166,7 @@ void updateBaddie( Baddie *baddie, float delta, int lines, int columns, int grid
 
     }
 
+    // points from capturing
     if ( baddie->showCapturePoints ) {
         baddie->showPointsCounter += delta;
         if ( baddie->showPointsCounter > baddie->timeToShowPoints ) {
@@ -114,30 +177,16 @@ void updateBaddie( Baddie *baddie, float delta, int lines, int columns, int grid
 
 }
 
-void drawBaddie( Baddie *baddie, int lines, int columns, int gridCellSize ) {
-
-    /*float drawRadius = baddie->radius * 1.5;
-
-    Color c = baddie->color;
-
-    if ( !baddie->hunting ) {
-        if ( baddie->blink ) {
-            c = baddie->returningToHuntColor;
-        } else {
-            c = baddie->vulnerableColor;
-        }
-    }
-
-    DrawCircleV( baddie->pos, drawRadius, c );*/
+void drawBaddie( Baddie *baddie ) {
 
     /*for ( int i = 0; i < baddie->pathSize - 1; i++ ) {
         CellPos *p1 = &baddie->path[i];
         CellPos *p2 = &baddie->path[i+1];
         DrawLine( 
-            p1->column * gridCellSize + gridCellSize / 2,
-            p1->line * gridCellSize + gridCellSize / 2,
-            p2->column * gridCellSize + gridCellSize / 2,
-            p2->line * gridCellSize + gridCellSize / 2,
+            p1->column * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
+            p1->line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
+            p2->column * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
+            p2->line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
             baddie->color
         );
     }*/
@@ -149,10 +198,10 @@ void drawBaddie( Baddie *baddie, int lines, int columns, int gridCellSize ) {
 
         if ( baddie->hunting ) {
             switch ( baddie->direction ) {
-                case DIRECTION_LEFT: xStart = xStarts[1]; break;
-                case DIRECTION_RIGHT: xStart = xStarts[0]; break;
-                case DIRECTION_UP: xStart = xStarts[2]; break;
-                case DIRECTION_DOWN: xStart = xStarts[3]; break;
+                case DIRECTION_LEFT: xStart = SPRITE_MAP_START_X[1]; break;
+                case DIRECTION_RIGHT: xStart = SPRITE_MAP_START_X[0]; break;
+                case DIRECTION_UP: xStart = SPRITE_MAP_START_X[2]; break;
+                case DIRECTION_DOWN: xStart = SPRITE_MAP_START_X[3]; break;
             }
         } else {
             if ( baddie->blink ) {
@@ -199,14 +248,7 @@ void drawBaddie( Baddie *baddie, int lines, int columns, int gridCellSize ) {
 
 }
 
-Vector2 getBaddieLineAndColumn( Baddie *baddie, int gridCellSize ) {
-    return (Vector2) {
-        baddie->pos.x / gridCellSize,
-        baddie->pos.y / gridCellSize,
-    };
-}
-
-void generateNewRandomPath( Baddie *baddie, int lines, int columns, int gridCellSize, GameWorld *gw ) {
+void generateNewRandomPath( Baddie *baddie, GameWorld *gw ) {
 
     CellType *grid = gw->grid;
 
@@ -215,111 +257,55 @@ void generateNewRandomPath( Baddie *baddie, int lines, int columns, int gridCell
     int targetColumn = 0;
 
     while ( !ok ) {
-        targetLine = GetRandomValue( 1, lines-1 );
-        targetColumn = GetRandomValue( 1, columns-1 );
-        if ( grid[targetLine*columns+targetColumn] >= P ) {
+        targetLine = GetRandomValue( 1, GRID_LINES-1 );
+        targetColumn = GetRandomValue( 1, GRID_COLUMNS-1 );
+        if ( grid[targetLine*GRID_COLUMNS+targetColumn] >= P ) {
             ok = true;
         }
     }
 
-    generateNewPath( baddie, targetLine, targetColumn, lines, columns, gridCellSize, gw );
+    generateNewPath( baddie, targetLine, targetColumn, gw );
 
 }
 
-void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, int lines, int columns, int gridCellSize, GameWorld *gw ) {
+void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, GameWorld *gw ) {
 
-    CellType *grid = gw->grid;
+    Vector2 p = getLineAndColumn( baddie->pos );
+    CellPos source = { p.y, p.x };
+    CellPos target = { targetLine, targetColumn };
 
-    // BFS
-    Vector2 p = getBaddieLineAndColumn( baddie, gridCellSize );
-    bool marked[GRID_LINES][GRID_COLUMNS] = { 0 };
-    CellPos edgeTo[GRID_LINES][GRID_COLUMNS] = { 0 };
-    CellPos queue[GRID_LINES*GRID_COLUMNS];
     int queueSize = 0;
     int queueStart = 0;
     int queueEnd = 0;
 
-    CellPos source = { p.y, p.x };
-    CellPos target = { targetLine, targetColumn };
-    queue[queueEnd++] = source;
+    // BFS
+    memset( gw->marked, 0, sizeof( bool ) * GRID_LINES * GRID_COLUMNS );
+    gw->marked[source.line][source.column] = true;
+
+    gw->queue[queueEnd++] = source;
     queueSize++;
-    marked[source.line][source.column] = true;
 
     while ( queueSize != 0 ) {
 
-        CellPos v = queue[queueStart++];
+        CellPos cell = gw->queue[queueStart++];
         queueSize--;
 
-        if ( v.line == target.line && v.column == target.column ) {
+        if ( cell.line == target.line && cell.column == target.column ) {
             break;
         }
         
-        int leftL = v.line;
-        int leftC = v.column-1;
-
-        if ( leftL >= 0 && leftL < lines &&
-             leftC >= 0 && leftC < columns &&
-             !marked[leftL][leftC] &&
-             grid[leftL*columns+leftC] >= G ) {
-
-            edgeTo[leftL][leftC] = v;
-            marked[leftL][leftC] = true;
-            queue[queueEnd++] = (CellPos) { leftL, leftC };
-            queueSize++;
-
-        }
-
-        int rightL = v.line;
-        int rightC = v.column+1;
-
-        if ( rightL >= 0 && rightL < lines &&
-             rightC >= 0 && rightC < columns &&
-             !marked[rightL][rightC] &&
-             grid[rightL*columns+rightC] >= G ) {
-
-            edgeTo[rightL][rightC] = v;
-            marked[rightL][rightC] = true;
-            queue[queueEnd++] = (CellPos) { rightL, rightC };
-            queueSize++;
-
-        }
-
-        int upL = v.line-1;
-        int upC = v.column;
-
-        if ( upL >= 0 && upL < lines &&
-             upC >= 0 && upC < columns &&
-             !marked[upL][upC] &&
-             grid[upL*columns+upC] >= G ) {
-
-            edgeTo[upL][upC] = v;
-            marked[upL][upC] = true;
-            queue[queueEnd++] = (CellPos) { upL, upC };
-            queueSize++;
-
-        }
-
-        int downL = v.line+1;
-        int downC = v.column;
-
-        if ( downL >= 0 && downL < lines &&
-             downC >= 0 && downC < columns &&
-             !marked[downL][downC] &&
-             grid[downL*columns+downC] >= G ) {
-
-            edgeTo[downL][downC] = v;
-            marked[downL][downC] = true;
-            queue[queueEnd++] = (CellPos) { downL, downC };
-            queueSize++;
-
-        }
+        visitNeightbor( cell.line, cell.column-1, cell, &queueSize, &queueEnd, gw );
+        visitNeightbor( cell.line, cell.column+1, cell, &queueSize, &queueEnd, gw );
+        visitNeightbor( cell.line-1, cell.column, cell, &queueSize, &queueEnd, gw );
+        visitNeightbor( cell.line+1, cell.column, cell, &queueSize, &queueEnd, gw );
 
     }
 
+    // builds the new path from source to target
     CellPos current = target;
     int pathSize = 0;
     while ( current.line != source.line || current.column != source.column ) {
-        current = edgeTo[current.line][current.column];
+        current = gw->edgeTo[current.line][current.column];
         pathSize++;
     }
 
@@ -327,11 +313,28 @@ void generateNewPath( Baddie *baddie, int targetLine, int targetColumn, int line
     int i = 0;
     while ( current.line != source.line || current.column != source.column ) {        
         baddie->path[pathSize-i-1] = current;
-        current = edgeTo[current.line][current.column];
+        current = gw->edgeTo[current.line][current.column];
         i++;
     }
+
     baddie->pathSize = pathSize;
     baddie->currentPathPos = 0;
+
+}
+
+void visitNeightbor( int line, int column, CellPos cell, int *queueSize, int *queueEnd, GameWorld *gw ) {
+
+    if ( line >= 0 && line < GRID_LINES &&
+         column >= 0 && column < GRID_COLUMNS &&
+         !gw->marked[line][column] &&
+         gw->grid[line*GRID_COLUMNS+column] >= G ) {
+
+        gw->edgeTo[line][column] = cell;
+        gw->marked[line][column] = true;
+        gw->queue[(*queueEnd)++] = (CellPos) { line, column };
+        (*queueSize)++;
+
+    }
 
 }
 

@@ -1,7 +1,6 @@
 - Add sounds and joystick support;
-- Time to refactorings and code sanitization!
 - Implement different behaviors for each phantom;
-- Make phathon escape pacman when vulnerable;
+- Make phantom escape pacman when vulnerable;
 
 - Bug or feature?
     - You can walk outside the grid :D
