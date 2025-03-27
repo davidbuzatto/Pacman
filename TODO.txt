@@ -1,4 +1,4 @@
-- Add sounds and joystick support;
+- Decrease speed of ghosts when in scatter mode;
 
 - Implement different behaviors for each ghost:
 
@@ -22,6 +22,9 @@
       corner is the lower-left.
 
 - Implement items (cherry, etc.);
+- Aquire new lives from points;
+- Implement new levels (just change gameworld parameters);
+- Add sounds and joystick support;
 
 - Bug or feature?
     - You can walk outside the grid :D
