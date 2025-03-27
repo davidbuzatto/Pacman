@@ -24,6 +24,7 @@
 - Implement items (cherry, etc.);
 - Aquire new lives from points;
 - Implement new levels (just change gameworld parameters);
+- Improve scenary with an image?
 - Add sounds and joystick support;
 
 - Bug or feature?
