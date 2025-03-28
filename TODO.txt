@@ -1,6 +1,6 @@
-- Decrease speed of ghosts when in scatter mode;
-
 - Implement different behaviors for each ghost:
+
+    - Implement chasing behaviors, since scatter is ok;
 
     - Blinky (red): Follows Pac-Man directly during Chase mode, and heads to 
       the upper-right corner during Scatter mode. He also has an "angry" mode

@@ -7,7 +7,7 @@
 
 #include "raylib/raylib.h"
 
-Ghost createNewGhost( int line, int column, int ySource, const char *name, Color color ) {
+Ghost createNewGhost( int line, int column, int ySource, const char *name, ChaseTargetType chaseTarget, Quadrant scatterQuadrant, Color color ) {
 
     return (Ghost) {
 
@@ -23,7 +23,9 @@ Ghost createNewGhost( int line, int column, int ySource, const char *name, Color
             .x = 0,
             .y = 0
         },
-        .walkingSpeed = 200,
+        .chasingSpeed = 200,
+        .scatterSpeed = 150,
+        .returningHomeSpeed = 300,
         .radius = GRID_CELL_SIZE / 2,
         .spriteMap = rm.spriteMap,
         .ySource = ySource,
@@ -53,6 +55,9 @@ Ghost createNewGhost( int line, int column, int ySource, const char *name, Color
         .capturePoints = 0,
         .timeToShowPoints = 2,
         .showPointsCounter = 0,
+
+        .chaseTarget = chaseTarget,
+        .scatterQuadrant = scatterQuadrant,
 
         .direction = DIRECTION_RIGHT,
         .state = ALIVE
@@ -92,7 +97,11 @@ void updateGhost( Ghost *ghost, float delta, GameWorld *gw ) {
         ghost->currentPathPos = -1;
         ghost->vel.x = 0;
         ghost->vel.y = 0;
-        generateNewRandomPath( ghost, gw );
+        if ( ghost->chasing ) {
+            generateChaseTargetPath( ghost, gw );
+        } else {
+            generateScatterQuadrantPath( ghost, gw );
+        }
         if ( ghost->state == RETURNING_HOME ) {
             ghost->chasing = true;
             ghost->blink = false;
@@ -109,21 +118,29 @@ void updateGhost( Ghost *ghost, float delta, GameWorld *gw ) {
         destX = ghost->path[ghost->currentPathPos].column * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
         destY = ghost->path[ghost->currentPathPos].line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2;
 
+        float currentSpeed = ghost->chasingSpeed;
+
+        if ( ghost->state == RETURNING_HOME ) {
+            currentSpeed = ghost->returningHomeSpeed;
+        } else if ( !ghost->chasing ) {
+            currentSpeed = ghost->scatterSpeed;
+        }
+
         if ( destX < ghost->pos.x ) {
-            ghost->vel.x = -ghost->walkingSpeed;
+            ghost->vel.x = -currentSpeed;
             ghost->direction = DIRECTION_LEFT;
         } else if ( destX > ghost->pos.x ) {
-            ghost->vel.x = ghost->walkingSpeed;
+            ghost->vel.x = currentSpeed;
             ghost->direction = DIRECTION_RIGHT;
         } else {
             ghost->vel.x = 0;
         }
         
         if ( destY < ghost->pos.y ) {
-            ghost->vel.y = -ghost->walkingSpeed;
+            ghost->vel.y = -currentSpeed;
             ghost->direction = DIRECTION_UP;
         } else if ( destY > ghost->pos.y ) {
-            ghost->vel.y = ghost->walkingSpeed;
+            ghost->vel.y = currentSpeed;
             ghost->direction = DIRECTION_DOWN;
         } else {
             ghost->vel.y = 0;
@@ -249,7 +266,14 @@ void drawGhost( Ghost *ghost ) {
         );
     }
 
-    //DrawText( ghost->name, ghost->pos.x + 30, ghost->pos.y, 20, ghost->color );
+    /*DrawText( ghost->name, ghost->pos.x + 30, ghost->pos.y, 20, ghost->color );
+    DrawRectangle( 
+        ghost->scatterQuadrant.column1 * GRID_CELL_SIZE,
+        ghost->scatterQuadrant.line1 * GRID_CELL_SIZE,
+        ( ghost->scatterQuadrant.column2 - ghost->scatterQuadrant.column1 + 1 ) * GRID_CELL_SIZE,
+        ( ghost->scatterQuadrant.line2 - ghost->scatterQuadrant.line1 + 1 ) * GRID_CELL_SIZE,
+        Fade( ghost->color, 0.5f )
+    );*/
 
 }
 
@@ -270,6 +294,45 @@ void generateNewRandomPath( Ghost *ghost, GameWorld *gw ) {
     }
 
     generateNewPath( ghost, targetLine, targetColumn, gw );
+
+}
+
+void generateScatterQuadrantPath( Ghost *ghost, GameWorld *gw ) {
+
+    CellType *grid = gw->grid;
+
+    bool ok = false;
+    int targetLine = 0;
+    int targetColumn = 0;
+
+    while ( !ok ) {
+        targetLine = GetRandomValue( ghost->scatterQuadrant.line1, ghost->scatterQuadrant.line2 );
+        targetColumn = GetRandomValue( ghost->scatterQuadrant.column1, ghost->scatterQuadrant.column2 );
+        if ( grid[targetLine*GRID_COLUMNS+targetColumn] >= P ) {
+            ok = true;
+        }
+    }
+
+    generateNewPath( ghost, targetLine, targetColumn, gw );
+
+}
+
+void generateChaseTargetPath( Ghost *ghost, GameWorld *gw ) {
+
+    switch ( ghost->chaseTarget ) {
+        case CHASE_TARGET_TYPE_BLINKY:
+            generateNewRandomPath( ghost, gw );
+            break;
+        case CHASE_TARGET_TYPE_INKY:
+            generateNewRandomPath( ghost, gw );
+            break;
+        case CHASE_TARGET_TYPE_PINKY:
+            generateNewRandomPath( ghost, gw );
+            break;
+        case CHASE_TARGET_TYPE_CLYDE:
+            generateNewRandomPath( ghost, gw );
+            break;
+    }
 
 }
 

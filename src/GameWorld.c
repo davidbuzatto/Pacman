@@ -21,7 +21,7 @@
 //#undef RAYGUI_IMPLEMENTATION
 
 const bool DEBUG_GRID = false;
-const bool IMMORTAL = false;
+const bool IMMORTAL = true;
 
 const CellType templateGrid[] = {
     A, H, H, H, H, H, H, H, H, H, H, H, H, B,   A, H, H, H, H, H, H, H, H, H, H, H, H, B,
@@ -47,7 +47,7 @@ const CellType templateGrid[] = {
     V, W, W, W, W, W, W, W, W, W, W, W, W, V,   V, W, W, W, W, W, W, W, W, W, W, W, W, V,
     V, W, A, H, H, B, W, A, H, H, H, B, W, V,   V, W, A, H, H, H, B, W, A, H, H, B, W, V,
     V, W, C, H, B, V, W, C, H, H, H, D, W, C,   D, W, C, H, H, H, D, W, V, A, H, D, W, V,
-    V, Q, W, W, V, V, W, W, W, W, W, W, W, P,   P, W, W, W, W, W, W, W, V, V, W, W, Q, V,
+    V, Q, W, W, V, V, W, W, W, W, W, W, W, P,   P, Q, W, W, W, W, W, W, V, V, W, W, Q, V,
     C, H, B, W, V, V, W, A, B, W, A, H, H, H,   H, H, H, B, W, A, B, W, V, V, W, A, H, D,
     A, H, D, W, C, D, W, V, V, W, C, H, H, B,   A, H, H, D, W, V, V, W, C, D, W, C, H, B,
     V, W, W, W, W, W, W, V, V, W, W, W, W, V,   V, W, W, W, W, V, V, W, W, W, W, W, W, V,
@@ -68,10 +68,30 @@ GameWorld* createGameWorld( void ) {
         .grid = {0},
         .pacman = createNewPacman( 23, 14 ),
         .ghosts = {
-            createNewGhost( 11, 14, 130, "Blinky", (Color){ 255, 21, 0, 255 } ),
-            createNewGhost( 14, 12, 194, "Inky", (Color){ 0, 232, 255, 255 } ),
-            createNewGhost( 14, 14, 162, "Pinky", (Color){ 255, 196, 253, 255 } ),
-            createNewGhost( 14, 16, 226, "Clyde", (Color){ 255, 183, 80, 255 } )
+            createNewGhost( 
+                11, 14, 130, 
+                "Blinky", 
+                CHASE_TARGET_TYPE_BLINKY, (Quadrant){ 1, 21, 5, 26 },
+                (Color){ 255, 21, 0, 255 }
+            ),
+            createNewGhost( 
+                14, 12, 194, 
+                "Inky",
+                CHASE_TARGET_TYPE_INKY, (Quadrant){ 25, 21, 29, 26 },
+                (Color){ 0, 232, 255, 255 }
+            ),
+            createNewGhost( 
+                14, 14, 162,
+                "Pinky",
+                CHASE_TARGET_TYPE_PINKY, (Quadrant){ 1, 1, 5, 6 },
+                (Color){ 255, 196, 253, 255 }
+            ),
+            createNewGhost( 
+                14, 16, 226, 
+                "Clyde", 
+                CHASE_TARGET_TYPE_CLYDE, (Quadrant){ 25, 1, 29, 6 },
+                (Color){ 255, 183, 80, 255 }
+            )
         },
         .boundaryColor = { 35, 44, 218, 255 },
         .doorColor = { 255, 171, 255, 255 },
@@ -281,14 +301,26 @@ void startScatterGhosts( GameWorld *gw ) {
 
     for ( int i = 0; i < 4; i++ ) {
 
-        if ( !resetCaptureCurrentPoints && gw->ghosts[i].chasing ) {
+        Ghost *g = &gw->ghosts[i];
+
+        if ( !resetCaptureCurrentPoints && g->chasing ) {
             resetCaptureCurrentPoints = true;
         }
 
-        gw->ghosts[i].chasing = false;
-        gw->ghosts[i].returnToChaseCounter = 0;
-        gw->ghosts[i].blinkCounter = 0;
-        gw->ghosts[i].blink = false;
+        g->returnToChaseCounter = 0;
+        g->blinkCounter = 0;
+        g->blink = false;
+
+        if ( g->chasing && g->state != RETURNING_HOME ) {
+
+            g->chasing = false;
+            
+            g->currentPathPos = -1;
+            g->vel.x = 0;
+            g->vel.y = 0;
+            generateScatterQuadrantPath( g, gw );
+
+        }
 
     }
 

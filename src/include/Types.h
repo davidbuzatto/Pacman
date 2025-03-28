@@ -54,10 +54,24 @@ typedef enum Direction {
     DIRECTION_DOWN
 } Direction;
 
+typedef enum ChaseTargetType {
+    CHASE_TARGET_TYPE_BLINKY,
+    CHASE_TARGET_TYPE_INKY,
+    CHASE_TARGET_TYPE_PINKY,
+    CHASE_TARGET_TYPE_CLYDE
+} ChaseTargetType;
+
 typedef struct CellPos {
     int line;
     int column;
 } CellPos;
+
+typedef struct Quadrant {
+    int line1;
+    int column1;
+    int line2;
+    int column2;
+} Quadrant;
 
 typedef struct Pacman {
 
@@ -91,7 +105,9 @@ typedef struct Ghost {
     Vector2 startPos;
     Vector2 pos;
     Vector2 vel;
-    float walkingSpeed;
+    float chasingSpeed;
+    float scatterSpeed;
+    float returningHomeSpeed;
     int radius;
     Texture2D spriteMap;
     int ySource;
@@ -121,6 +137,9 @@ typedef struct Ghost {
     int capturePoints;
     float timeToShowPoints;
     float showPointsCounter;
+
+    ChaseTargetType chaseTarget;
+    Quadrant scatterQuadrant;
 
     Direction direction;
     State state;
