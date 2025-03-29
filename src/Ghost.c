@@ -1,4 +1,5 @@
 #include <string.h>
+#include <math.h>
 
 #include "Types.h"
 #include "Ghost.h"
@@ -195,7 +196,7 @@ void updateGhost( Ghost *ghost, float delta, GameWorld *gw ) {
 
 void drawGhost( Ghost *ghost ) {
 
-    /*for ( int i = 0; i < ghost->pathSize - 1; i++ ) {
+    for ( int i = 0; i < ghost->pathSize - 1; i++ ) {
         CellPos *p1 = &ghost->path[i];
         CellPos *p2 = &ghost->path[i+1];
         DrawLine( 
@@ -205,7 +206,7 @@ void drawGhost( Ghost *ghost ) {
             p2->line * GRID_CELL_SIZE + GRID_CELL_SIZE / 2,
             ghost->color
         );
-    }*/
+    }
 
     int xStart = 2;
     int yStart = ghost->ySource;
@@ -274,6 +275,7 @@ void drawGhost( Ghost *ghost ) {
         ( ghost->scatterQuadrant.line2 - ghost->scatterQuadrant.line1 + 1 ) * GRID_CELL_SIZE,
         Fade( ghost->color, 0.5f )
     );*/
+    //DrawCircleLinesV( ghost->pos, GRID_CELL_SIZE * 8, ghost->color );
 
 }
 
@@ -321,25 +323,79 @@ void generateChaseTargetPath( Ghost *ghost, GameWorld *gw ) {
 
     switch ( ghost->chaseTarget ) {
         case CHASE_TARGET_TYPE_BLINKY:
-            generateNewRandomPath( ghost, gw );
+            generateBlinkyChasePath( ghost, gw );
             break;
         case CHASE_TARGET_TYPE_INKY:
-            generateNewRandomPath( ghost, gw );
+            generateInkyChasePath( ghost, gw );
             break;
         case CHASE_TARGET_TYPE_PINKY:
-            generateNewRandomPath( ghost, gw );
+            generatePinkyChasePath( ghost, gw );
             break;
         case CHASE_TARGET_TYPE_CLYDE:
+            generateClydeChasePath( ghost, gw );
+            break;
+    }
+
+}
+
+// follows Pac-man
+void generateBlinkyChasePath( Ghost *ghost, GameWorld *gw ) {
+
+    CellPos pos = getLineAndColumn( gw->pacman.pos );
+    generateNewPath( ghost, pos.line, pos.column, gw );
+
+}
+
+// follows Pac-man (distance of 2 cells)
+void generateInkyChasePath( Ghost *ghost, GameWorld *gw ) {
+
+    CellType *grid = gw->grid;
+    CellPos pos = getLineAndColumn( gw->pacman.pos );
+
+    int targetLine = 0;
+    int targetColumn = 0;
+
+    int incPos[] = { 0, 2, 0, -2, 2, 0, -2, 0 };
+    int k = 0;
+
+    while ( true ) {
+        targetLine = pos.line + incPos[k];
+        targetColumn = pos.column + incPos[k+1];
+        if ( grid[targetLine*GRID_COLUMNS+targetColumn] >= P ) {
+            generateNewPath( ghost, targetLine, targetColumn, gw );
+            break;
+        }
+        k += 2;
+        if ( k > 7 ) {
             generateNewRandomPath( ghost, gw );
             break;
+        }
+    }
+
+}
+
+// follows Pac-man (distance of 2 cells)
+void generatePinkyChasePath( Ghost *ghost, GameWorld *gw ) {
+    generateInkyChasePath( ghost, gw );
+}
+
+// follows Pac-man and evades when next to 8 cells
+void generateClydeChasePath( Ghost *ghost, GameWorld *gw ) {
+
+    float dist = hypotf( ghost->pos.x - gw->pacman.pos.x, ghost->pos.y - gw->pacman.pos.y );
+
+    if ( dist > GRID_CELL_SIZE * 8 ) {
+        CellPos pos = getLineAndColumn( gw->pacman.pos );
+        generateNewPath( ghost, pos.line, pos.column, gw );
+    } else {
+        generateScatterQuadrantPath( ghost, gw );
     }
 
 }
 
 void generateNewPath( Ghost *ghost, int targetLine, int targetColumn, GameWorld *gw ) {
 
-    Vector2 p = getLineAndColumn( ghost->pos );
-    CellPos source = { p.y, p.x };
+    CellPos source = getLineAndColumn( ghost->pos );
     CellPos target = { targetLine, targetColumn };
 
     int queueSize = 0;
@@ -406,9 +462,9 @@ void visitNeightbor( int line, int column, CellPos cell, int *queueSize, int *qu
 
 }
 
-void showCapturePoints( Ghost *ghost, Vector2 pos, int points ) {
+void showCapturePoints( Ghost *ghost, CellPos pos, int points ) {
     ghost->showCapturePoints = true;
-    ghost->capturePointsPos.x = pos.x * GRID_CELL_SIZE;
-    ghost->capturePointsPos.y = pos.y * GRID_CELL_SIZE;
+    ghost->capturePointsPos.x = pos.column * GRID_CELL_SIZE;
+    ghost->capturePointsPos.y = pos.line * GRID_CELL_SIZE;
     ghost->capturePoints = points;
 }

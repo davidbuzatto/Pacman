@@ -21,6 +21,8 @@
       Scatter corner when within an 8-Dot radius of Pac-Man. His Scatter Mode
       corner is the lower-left.
 
+- Make ghosts use the "teleport" corridor (update graph representation in BFS);
+- Update paths constantly;
 - Implement items (cherry, etc.);
 - Aquire new lives from points;
 - Implement new levels (just change gameworld parameters);

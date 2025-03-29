@@ -118,7 +118,7 @@ GameWorld* createGameWorld( void ) {
     copyTemplateGrid( gw, templateGrid );
     
     for ( int i = 0; i < 4; i++ ) {
-        generateNewRandomPath( &gw->ghosts[i], gw );
+        generateChaseTargetPath( &gw->ghosts[i], gw );
     }
 
     return gw;
@@ -378,7 +378,7 @@ void resetGame( GameWorld *gw, bool gameOver ) {
         g->state = ALIVE;
         g->direction = DIRECTION_RIGHT;
         g->pos = g->startPos;
-        generateNewRandomPath( g, gw );
+        generateChaseTargetPath( g, gw );
     }
 
     if ( gameOver ) {

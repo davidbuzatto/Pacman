@@ -86,9 +86,9 @@ void inputAndUpdatePacman( Pacman *pacman, float delta, GameWorld *gw ) {
         }
 
         // obstacle collision resolution
-        Vector2 p = getLineAndColumn( pacman->pos );
-        int x = (int) p.x;
-        int y = (int) p.y;
+        CellPos p = getLineAndColumn( pacman->pos );
+        int x = (int) p.column;
+        int y = (int) p.line;
         int xL = (int) ( ( pacman->pos.x - pacman->radius + 1 ) / GRID_CELL_SIZE );
         int xR = (int) ( ( pacman->pos.x + pacman->radius - 1 ) / GRID_CELL_SIZE );
         int yU = (int) ( ( pacman->pos.y - pacman->radius + 1 ) / GRID_CELL_SIZE );
