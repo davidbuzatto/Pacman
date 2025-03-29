@@ -8,6 +8,9 @@
 #define GRID_COLUMNS 28
 #define GRID_CELL_SIZE 24
 
+#define DRAWING_DEBUG false
+#define IMMORTAL true
+
 typedef enum CellType {
 
     // boundaries and obstacles

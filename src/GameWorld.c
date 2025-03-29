@@ -20,9 +20,6 @@
 //#include "raylib/raygui.h"
 //#undef RAYGUI_IMPLEMENTATION
 
-const bool DEBUG_GRID = false;
-const bool IMMORTAL = true;
-
 const CellType templateGrid[] = {
     A, H, H, H, H, H, H, H, H, H, H, H, H, B,   A, H, H, H, H, H, H, H, H, H, H, H, H, B,
     V, W, W, W, W, W, W, W, W, W, W, W, W, V,   V, W, W, W, W, W, W, W, W, W, W, W, W, V,
@@ -47,7 +44,7 @@ const CellType templateGrid[] = {
     V, W, W, W, W, W, W, W, W, W, W, W, W, V,   V, W, W, W, W, W, W, W, W, W, W, W, W, V,
     V, W, A, H, H, B, W, A, H, H, H, B, W, V,   V, W, A, H, H, H, B, W, A, H, H, B, W, V,
     V, W, C, H, B, V, W, C, H, H, H, D, W, C,   D, W, C, H, H, H, D, W, V, A, H, D, W, V,
-    V, Q, W, W, V, V, W, W, W, W, W, W, W, P,   P, Q, W, W, W, W, W, W, V, V, W, W, Q, V,
+    V, Q, W, W, V, V, W, W, W, W, W, W, W, P,   P, W, W, W, W, W, W, W, V, V, W, W, Q, V, // Q test (if needed)
     C, H, B, W, V, V, W, A, B, W, A, H, H, H,   H, H, H, B, W, A, B, W, V, V, W, A, H, D,
     A, H, D, W, C, D, W, V, V, W, C, H, H, B,   A, H, H, D, W, V, V, W, C, D, W, C, H, B,
     V, W, W, W, W, W, W, V, V, W, W, W, W, V,   V, W, W, W, W, V, V, W, W, W, W, W, W, V,
@@ -198,7 +195,7 @@ void drawGameWorld( GameWorld *gw ) {
     drawPacman( &gw->pacman );
     drawMessages( gw ) ;
 
-    if ( DEBUG_GRID ) {
+    if ( DRAWING_DEBUG ) {
 
         for ( int i = 0; i <= GRID_LINES; i++ ) {
             DrawLine( 0, i * GRID_CELL_SIZE, GRID_COLUMNS * GRID_CELL_SIZE, i * GRID_CELL_SIZE, WHITE );
